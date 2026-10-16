@@ -1,0 +1,26 @@
+#!/bin/bash
+# Build-time initialisation (runs as student): cluster, role and database of the shop.
+set -euo pipefail
+export PATH=/usr/lib/postgresql/15/bin:$PATH
+initdb -D /srv/pgdata -U student --auth-local=trust --auth-host=scram-sha-256 -E UTF8 --locale=C.UTF-8 >/dev/null
+cat >> /srv/pgdata/postgresql.conf <<CONF
+listen_addresses = '127.0.0.1'
+port = 5432
+unix_socket_directories = '/srv/run'
+logging_collector = off
+shared_buffers = 32MB
+CONF
+pg_ctl -D /srv/pgdata -o "-c listen_addresses=''" -w start >/dev/null
+psql -h /srv/run -U student -d postgres -v ON_ERROR_STOP=1 -q <<SQL
+CREATE ROLE store LOGIN PASSWORD 'Sh0p-2026-store';
+CREATE DATABASE store OWNER store;
+SQL
+psql -h /srv/run -U store -d store -v ON_ERROR_STOP=1 -q <<SQL
+CREATE TABLE products (id serial PRIMARY KEY, name text NOT NULL, price numeric(10,2) NOT NULL, stock int NOT NULL);
+INSERT INTO products (name, price, stock) VALUES
+  ('Клавиатура механическая', 5490.00, 14), ('Мышь беспроводная', 1890.00, 32),
+  ('Монитор 27"', 23990.00, 5), ('Кабель HDMI 2 м', 590.00, 120);
+SQL
+pg_ctl -D /srv/pgdata -w stop >/dev/null
+cp /srv/app/.env.example /srv/app/.env
+: > /srv/log/store-api.log

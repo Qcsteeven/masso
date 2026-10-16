@@ -1,0 +1,3 @@
+#!/bin/bash
+mkdir -p /tmp/.masso /srv/run /srv/log /srv/nginx/tmp
+exec /usr/bin/supervisord -c /etc/masso/supervisord.conf
