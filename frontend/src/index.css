@@ -1,0 +1,49 @@
+@import "tailwindcss";
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/500.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource/ibm-plex-sans/700.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+
+/* Tokens from docs/mockups/README.md (Claude Design) */
+@theme {
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --color-bg: #eef1f4;
+  --color-surface: #ffffff;
+  --color-line: #d5dce3;
+  --color-line-soft: #e6eaee;
+  --color-field: #b9c3cd;
+  --color-ink: #14212e;
+  --color-muted: #556270;
+  --color-label: #3b4856;
+  --color-nav: #12202c;
+  --color-nav-hover: #1a2e40;
+  --color-nav-ink: #c3cfdb;
+  --color-nav-label: #7f93a6;
+  --color-accent: #1d5fd1;
+  --color-accent-dark: #123f8f;
+  --color-blue-bg: #e6eefb;
+  --color-blue-ink: #1747a6;
+  --color-green-bg: #e3f3ea;
+  --color-green-ink: #135c34;
+  --color-green: #17703f;
+  --color-amber-bg: #fff3d1;
+  --color-amber-ink: #7a4f00;
+  --color-amber: #b7791f;
+  --color-red-bg: #fce8e6;
+  --color-red-ink: #8c1d18;
+  --color-red: #b3261e;
+  --color-grey-bg: #edf0f3;
+  --color-grey-ink: #3b4856;
+  --color-term: #0f1a24;
+  --color-term-bar: #182b3b;
+  --radius-card: 10px;
+}
+
+html, body, #root { min-height: 100%; }
+body { margin: 0; background: var(--color-bg); color: var(--color-ink); font-family: var(--font-sans); font-size: 14px; }
+a { color: var(--color-accent); }
+a:hover { color: var(--color-accent-dark); }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }

@@ -6,3 +6,6 @@
 
 | Дата | Документ, пункт | Было | Стало | Почему | Фаза |
 |---|---|---|---|---|---|
+| 2026-10-17 | Спека §1.1 (Frontend) | eslint + prettier, shadcn/ui | oxlint (шаблон Vite 8) и собственный мини-набор компонентов `src/components/ui.tsx` по токенам Claude Design | Шаблон Vite 8 поставляется с oxlint; макеты ТП ред. 2 задают собственный визуальный язык, shadcn пришлось бы перекрашивать целиком | 0 |
+| 2026-10-17 | Спека §10 (ответ API) | Непредвиденная ошибка сервера — код не определён | 500 с кодом VERIFICATION_FAILED и общим сообщением без деталей | Коды ошибок — только из перечня ТП; внутренние детали не раскрываются | 0 |
+| 2026-10-17 | Спека §3 | — | Добавлены служебные поля: users.last_login_at, sessions.kind/cmd_log_offset/documents_state/error, llm_providers.last_error(_at), llm_settings.reason, security_events.severity, agent_logs.task/provider, scenario_templates.title/validation_report | Нужны для экранов ТП ред. 2 и фонового обработчика | 1 |

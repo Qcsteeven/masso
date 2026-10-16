@@ -18,9 +18,9 @@
 - `.env.example`, `.gitignore`, README «как запустить».
 
 **Готово, когда:**
-- [ ] `make up` → `curl localhost/api/health` отдаёт `{"status":"success",...}`, SPA открывается
-- [ ] `make check` зелёный (пусть даже на 2–3 тестах)
-- [ ] ruff, mypy, eslint, tsc настроены и запускаются хуком/командой
+- [x] `make up` → `curl localhost/api/health` отдаёт `{"status":"success",...}`, SPA открывается
+- [x] `make check` зелёный (пусть даже на 2–3 тестах)
+- [x] ruff, mypy, eslint, tsc настроены и запускаются хуком/командой
 
 ## Фаза 1. Данные, аутентификация, RBAC, аудит
 
@@ -33,9 +33,9 @@
 - `/api/users` (admin), `audit_logs` пишется для изменения ролей, статуса, оценок, LLM-режима.
 
 **Готово, когда:**
-- [ ] Тесты: неверный пароль → AUTH_INVALID_CREDENTIALS; студент на admin-эндпоинте → AUTH_FORBIDDEN; refresh ротирует токен
-- [ ] Смена роли создаёт запись в audit_logs с before/after
-- [ ] `make migrate && make seed` идемпотентны
+- [x] Тесты: неверный пароль → AUTH_INVALID_CREDENTIALS; студент на admin-эндпоинте → AUTH_FORBIDDEN; refresh ротирует токен
+- [x] Смена роли создаёт запись в audit_logs с before/after
+- [x] `make migrate && make seed` идемпотентны
 
 ## Фаза 2. Граф компетенций и ProfileAgent
 
