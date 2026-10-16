@@ -46,8 +46,8 @@
 - `profile_agent/service.py`: `deficits(user, domain)`, `recommendations(user, domain)`, `apply_result(user, template, passed)` — чистые функции + SQL (recursive CTE для транзитивных зависимых).
 
 **Готово, когда:**
-- [ ] Unit-тесты алгоритма на фикстурах: разрыв ≥2, давность 30 дней, critical при >3 зависимых, 3 успеха подряд → level+1, cap по level_max
-- [ ] Импорт графа с циклом отклоняется с VALIDATION_ERROR
+- [x] Unit-тесты алгоритма на фикстурах: разрыв ≥2, давность 30 дней, critical при >3 зависимых, 3 успеха подряд → level+1, cap по level_max
+- [x] Импорт графа с циклом отклоняется с VALIDATION_ERROR
 
 ## Фаза 3. LLM Gateway
 

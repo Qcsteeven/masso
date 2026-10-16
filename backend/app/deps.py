@@ -78,3 +78,12 @@ AdminUser = Annotated[CurrentUser, Depends(require_roles("admin"))]
 OpsUser = Annotated[CurrentUser, Depends(require_roles("admin", "sysadmin"))]
 StaffUser = Annotated[CurrentUser, Depends(require_roles("teacher", "methodist", "admin"))]
 AuthorUser = Annotated[CurrentUser, Depends(require_roles("methodist", "admin"))]
+
+
+def can_see_group(user: CurrentUser, group_code: str | None) -> bool:
+    """Teachers see the group stored in their own users.group_code (all groups when it is empty); admins see all."""
+    if user.has("admin"):
+        return True
+    if user.has("teacher"):
+        return user.group_code is None or (group_code is not None and group_code == user.group_code)
+    return False

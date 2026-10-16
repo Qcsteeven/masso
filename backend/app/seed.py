@@ -36,7 +36,7 @@ GROUP = "ИСИб-23-1"
 USERS: list[tuple[str, str, list[str], str | None]] = [
     ("admin@masso.local", "Администратор МАССО", ["admin"], None),
     ("ops@masso.local", "Оператор стенда", ["sysadmin"], None),
-    ("teacher@masso.local", "Шипицин Дмитрий Сергеевич", ["teacher"], None),
+    ("teacher@masso.local", "Шипицин Дмитрий Сергеевич", ["teacher"], GROUP),
     ("methodist@masso.local", "Методист кафедры", ["methodist"], None),
     ("demonov.la@masso.local", "Демонов Лев Алексеевич", ["student"], GROUP),
     ("ivanov.as@masso.local", "Иванов Артём Сергеевич", ["student"], GROUP),

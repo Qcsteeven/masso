@@ -1,0 +1,57 @@
+{
+  "skills": [
+    {"code": "LNX.BASE", "domain": "devops", "name": "Основы Linux", "level_max": 5, "description": "Файловая система, процессы, права, работа в терминале.", "requires": []},
+    {"code": "OPS.LOGS", "domain": "devops", "name": "Работа с логами сервисов", "level_max": 5, "description": "Поиск причин сбоя по журналам приложений и служб.", "requires": [{"code": "LNX.BASE", "weight": 0.8}]},
+    {"code": "NET.TCPIP", "domain": "devops", "name": "Сети TCP/IP", "level_max": 5, "description": "Адреса, порты, проверка доступности сервисов.", "requires": [{"code": "LNX.BASE", "weight": 0.6}]},
+    {"code": "LNX.PERM", "domain": "devops", "name": "Права доступа в Linux", "level_max": 5, "description": "Пользователи, группы, права на файлы и каталоги.", "requires": [{"code": "LNX.BASE", "weight": 0.9}]},
+    {"code": "OPS.PROC", "domain": "devops", "name": "Управление процессами и службами", "level_max": 5, "description": "Состояние служб, перезапуск, supervisord.", "requires": [{"code": "LNX.BASE", "weight": 0.8}]},
+    {"code": "OPS.CONFIG", "domain": "devops", "name": "Конфигурация сервисов", "level_max": 5, "description": "Файлы конфигурации и переменные окружения приложений.", "requires": [{"code": "LNX.BASE", "weight": 0.7}]},
+    {"code": "DB.PG.CLIENT", "domain": "devops", "name": "Подключение приложений к PostgreSQL", "level_max": 5, "description": "Строки подключения, пользователи БД, диагностика ошибок аутентификации.", "requires": [{"code": "OPS.CONFIG", "weight": 0.7}, {"code": "NET.TCPIP", "weight": 0.4}]},
+    {"code": "DB.PG.ADMIN", "domain": "devops", "name": "PostgreSQL: администрирование", "level_max": 5, "description": "Запуск, остановка, роли и базовые проверки СУБД.", "requires": [{"code": "DB.PG.CLIENT", "weight": 0.6}, {"code": "OPS.PROC", "weight": 0.5}]},
+    {"code": "WEB.NGINX.DIAG", "domain": "devops", "name": "Диагностика обратного прокси Nginx", "level_max": 5, "description": "Upstream, коды 502/504, проверка конфигурации.", "requires": [{"code": "OPS.LOGS", "weight": 0.8}, {"code": "NET.TCPIP", "weight": 0.6}]},
+    {"code": "WEB.LB", "domain": "devops", "name": "Балансировка нагрузки", "level_max": 5, "description": "Несколько upstream-серверов и проверки здоровья.", "requires": [{"code": "WEB.NGINX.DIAG", "weight": 0.8}]},
+    {"code": "WEB.TLS", "domain": "devops", "name": "TLS-терминирование", "level_max": 5, "description": "Сертификаты и HTTPS на прокси.", "requires": [{"code": "WEB.NGINX.DIAG", "weight": 0.6}]},
+    {"code": "WEB.HA", "domain": "devops", "name": "Отказоустойчивый веб-стек", "level_max": 5, "description": "Перезапуск, зависимости служб, healthcheck.", "requires": [{"code": "WEB.NGINX.DIAG", "weight": 0.7}, {"code": "DB.PG.ADMIN", "weight": 0.5}]},
+    {"code": "OPS.MON", "domain": "devops", "name": "Мониторинг веб-сервиса", "level_max": 5, "description": "Метрики доступности, алерты, проверка после исправления.", "requires": [{"code": "WEB.NGINX.DIAG", "weight": 0.5}, {"code": "OPS.LOGS", "weight": 0.6}]},
+    {"code": "OPS.INCIDENT", "domain": "devops", "name": "Восстановление сервиса после сбоя", "level_max": 5, "description": "Последовательная диагностика и устранение каскадного отказа.", "requires": [{"code": "WEB.NGINX.DIAG", "weight": 0.7}, {"code": "DB.PG.CLIENT", "weight": 0.7}, {"code": "OPS.PROC", "weight": 0.6}]},
+
+    {"code": "SEC.PORTS", "domain": "security", "name": "Контроль открытых портов", "level_max": 5, "description": "Выявление лишних слушающих сервисов.", "requires": [{"code": "NET.TCPIP", "weight": 0.8}]},
+    {"code": "SEC.PROC", "domain": "security", "name": "Ограничение прав процессов", "level_max": 5, "description": "Запуск служб с минимальными правами.", "requires": [{"code": "LNX.PERM", "weight": 0.8}, {"code": "OPS.PROC", "weight": 0.5}]},
+    {"code": "SEC.AUDIT", "domain": "security", "name": "Аудит прав и процессов", "level_max": 5, "description": "Поиск подозрительной активности по журналам и процессам.", "requires": [{"code": "LNX.PERM", "weight": 0.7}, {"code": "OPS.LOGS", "weight": 0.6}]},
+
+    {"code": "LAW.CONTRACT.READ", "domain": "legal", "name": "Анализ структуры договора", "level_max": 5, "description": "Предмет, стороны, существенные условия.", "requires": []},
+    {"code": "LAW.TERMS", "domain": "legal", "name": "Сроки и неустойки", "level_max": 5, "description": "Согласованность сроков поставки и размера штрафов.", "requires": [{"code": "LAW.CONTRACT.READ", "weight": 0.8}]},
+    {"code": "LAW.SUMS", "domain": "legal", "name": "Цена и порядок расчётов", "level_max": 5, "description": "Сверка цены договора со спецификацией.", "requires": [{"code": "LAW.CONTRACT.READ", "weight": 0.7}]},
+    {"code": "LAW.NORM.REF", "domain": "legal", "name": "Работа с нормативными ссылками", "level_max": 5, "description": "Актуальность ссылок на нормы права.", "requires": [{"code": "LAW.CONTRACT.READ", "weight": 0.6}]},
+    {"code": "LAW.DRAFT", "domain": "legal", "name": "Редактирование договорных условий", "level_max": 5, "description": "Корректные формулировки исправлений.", "requires": [{"code": "LAW.TERMS", "weight": 0.6}, {"code": "LAW.SUMS", "weight": 0.5}, {"code": "LAW.NORM.REF", "weight": 0.5}]},
+    {"code": "LAW.CHANGE", "domain": "legal", "name": "Учёт изменившихся вводных", "level_max": 5, "description": "Адаптация решения к новым условиям клиента.", "requires": [{"code": "LAW.NORM.REF", "weight": 0.6}]},
+
+    {"code": "AUD.PRIMARY", "domain": "audit", "name": "Первичные учётные документы", "level_max": 5, "description": "Счёт, акт, товарная накладная: обязательные реквизиты.", "requires": []},
+    {"code": "AUD.ARITH", "domain": "audit", "name": "Арифметическая проверка документов", "level_max": 5, "description": "Количество × цена, итоги, НДС.", "requires": [{"code": "AUD.PRIMARY", "weight": 0.7}]},
+    {"code": "AUD.RECON", "domain": "audit", "name": "Сверка документов между собой", "level_max": 5, "description": "Поиск расхождений между счётом, актом и накладной.", "requires": [{"code": "AUD.ARITH", "weight": 0.8}]},
+    {"code": "AUD.EXPLAIN", "domain": "audit", "name": "Обоснование выявленного расхождения", "level_max": 5, "description": "Пояснение причины и последствий ошибки.", "requires": [{"code": "AUD.RECON", "weight": 0.6}]}
+  ],
+  "targets": [
+    {"domain": "devops", "skill": "LNX.BASE", "required_level": 3},
+    {"domain": "devops", "skill": "OPS.LOGS", "required_level": 3},
+    {"domain": "devops", "skill": "NET.TCPIP", "required_level": 3},
+    {"domain": "devops", "skill": "OPS.PROC", "required_level": 3},
+    {"domain": "devops", "skill": "OPS.CONFIG", "required_level": 3},
+    {"domain": "devops", "skill": "DB.PG.CLIENT", "required_level": 3},
+    {"domain": "devops", "skill": "DB.PG.ADMIN", "required_level": 3},
+    {"domain": "devops", "skill": "WEB.NGINX.DIAG", "required_level": 3},
+    {"domain": "devops", "skill": "OPS.INCIDENT", "required_level": 3},
+    {"domain": "security", "skill": "SEC.PORTS", "required_level": 3},
+    {"domain": "security", "skill": "SEC.PROC", "required_level": 3},
+    {"domain": "security", "skill": "SEC.AUDIT", "required_level": 3},
+    {"domain": "legal", "skill": "LAW.CONTRACT.READ", "required_level": 3},
+    {"domain": "legal", "skill": "LAW.TERMS", "required_level": 3},
+    {"domain": "legal", "skill": "LAW.SUMS", "required_level": 3},
+    {"domain": "legal", "skill": "LAW.NORM.REF", "required_level": 3},
+    {"domain": "legal", "skill": "LAW.DRAFT", "required_level": 3},
+    {"domain": "audit", "skill": "AUD.PRIMARY", "required_level": 3},
+    {"domain": "audit", "skill": "AUD.ARITH", "required_level": 3},
+    {"domain": "audit", "skill": "AUD.RECON", "required_level": 3},
+    {"domain": "audit", "skill": "AUD.EXPLAIN", "required_level": 3}
+  ]
+}
