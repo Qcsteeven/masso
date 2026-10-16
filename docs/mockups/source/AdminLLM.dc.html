@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>LLM и песочницы</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#EEF1F4}
+a{color:#1D5FD1}a:hover{color:#123F8F}
+.nav{flex:1 1 232px;background:#12202C;color:#C3CFDB;box-sizing:border-box;padding:20px 12px;display:flex;flex-direction:column;gap:2px}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 10px 20px;color:#fff;font-weight:700;letter-spacing:.06em;font-size:17px}
+.nl{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#7F93A6;padding:16px 12px 6px}
+.ni{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 12px;border-radius:8px;color:#C3CFDB;text-decoration:none;font-size:14px}
+.ni:hover{background:#1A2E40;color:#fff}
+.ni.on{background:#1D5FD1;color:#fff}
+.main{flex:999 1 560px;min-width:0;display:flex;flex-direction:column}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:16px;justify-content:space-between;padding:14px 32px;background:#fff;border-bottom:1px solid #D5DCE3}
+.card{background:#fff;border:1px solid #D5DCE3;border-radius:10px;padding:18px;box-sizing:border-box;min-width:0}
+.h2{margin:0;font-size:15px;font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:11px;font-size:12px;font-weight:500;white-space:nowrap}
+.c-blue{background:#E6EEFB;color:#1747A6}.c-green{background:#E3F3EA;color:#135C34}.c-amber{background:#FFF3D1;color:#7A4F00}.c-red{background:#FCE8E6;color:#8C1D18}.c-grey{background:#EDF0F3;color:#3B4856}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:8px;font:inherit;font-weight:600;font-size:14px;cursor:pointer;border:1px solid #B9C3CD;background:#fff;color:#14212E;text-decoration:none;box-sizing:border-box;white-space:nowrap}
+.btn.pri{background:#1D5FD1;border-color:#1D5FD1;color:#fff}
+.mono{font-family:'IBM Plex Mono',monospace}
+.muted{color:#556270}
+table{border-collapse:collapse;width:100%}
+th{text-align:left;font-size:11.5px;font-weight:600;color:#556270;text-transform:uppercase;letter-spacing:.06em;padding:10px 12px;border-bottom:1px solid #D5DCE3;white-space:nowrap}
+td{padding:11px 12px;border-bottom:1px solid #E6EAEE;font-size:13.5px;vertical-align:middle}
+.row{display:grid;grid-template-columns:34% 66%;align-items:center;font-size:13.5px}
+.row input,.row select,.row textarea{border:1px solid #B9C3CD;border-radius:8px;padding:0 10px;font:inherit;font-size:13.5px;color:#14212E;box-sizing:border-box;width:100%;background:#fff}
+.row input,.row select{height:40px}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid #B9C3CD;border-radius:10px;overflow:hidden}
+.seg label{display:flex;flex-direction:column;gap:4px;padding:12px 14px;cursor:pointer;border-left:1px solid #D5DCE3;font-size:13px}
+.seg label:first-child{border-left:0}
+.seg input{position:absolute;opacity:0;width:1px;height:1px}
+</style>
+</helmet>
+<div style="min-height: 900px; display: flex; flex-wrap: wrap; font-family: 'IBM Plex Sans', sans-serif; color: #14212E; background: #EEF1F4; font-size: 14px;">
+  <nav class="nav" aria-label="Основное меню">
+    <div class="brand"><svg width="32" height="32" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="10" fill="#1D5FD1"></rect><g stroke="#fff" stroke-width="2.4" fill="none"><path d="M14 15l8 14M30 15l-8 14M14 15h16"></path></g><g fill="#fff"><circle cx="14" cy="15" r="3.8"></circle><circle cx="30" cy="15" r="3.8"></circle><circle cx="22" cy="29" r="3.8"></circle></g></svg>МАССО</div>
+    <div class="nl">Администратор</div>
+    <a class="ni" href="AdminUsers.dc.html"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"></path><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.8 2.6 2.5 3 5.2"></path></svg>Пользователи и роли</a>
+    <a class="ni on" href="AdminLLM.dc.html" aria-current="page"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"></rect><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"></path></svg>LLM и песочницы</a>
+    <a class="ni" href="SysHealth.dc.html"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg>Аудит и безопасность</a>
+    <div style="flex-grow: 1;"></div>
+    <a class="ni" href="Main.dc.html"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 16l4-4-4-4M14 12H4"></path></svg>Выйти</a>
+  </nav>
+  <div class="main">
+    <header class="top">
+      <div>
+        <h1 style="margin: 0; font-size: 22px; font-weight: 600;">LLM и песочницы</h1>
+        <div class="muted" style="font-size: 13px;">Режим LLM Gateway, провайдеры, профили учебных сред</div>
+      </div>
+      <span class="chip c-amber" style="height: 28px; font-size: 13px;">режим: локальный с 08:15</span>
+    </header>
+    <main style="padding: 20px 32px 32px; display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;">
+      <div style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column; gap: 16px;">
+        <section class="card" style="padding: 0;">
+          <div style="padding: 16px 18px 6px;"><h2 class="h2">Провайдеры (OpenAI-совместимый API)</h2></div>
+          <div style="overflow-x: auto;">
+          <table>
+            <thead><tr><th>Провайдер</th><th>Адрес</th><th>Задержка</th><th>Состояние</th></tr></thead>
+            <tbody>
+              <tr><td><div style="font-weight: 600;">Внешний</div><div class="muted" style="font-size: 12px;">модель задаётся в настройках · ключ в переменной окружения</div></td><td class="mono" style="font-size: 12.5px;">[URL ПРОВАЙДЕРА]/v1</td><td class="mono">—</td><td><span class="chip c-red">429 · превышен лимит</span></td></tr>
+              <tr style="background: #F2F6FD;"><td><div style="font-weight: 600;">Локальный (Ollama)</div><div class="muted" style="font-size: 12px;">используется сейчас</div></td><td class="mono" style="font-size: 12.5px;">http://llm-local:11434/v1</td><td class="mono">2,8 с</td><td><span class="chip c-green">доступен</span></td></tr>
+              <tr><td><div style="font-weight: 600;">Шаблонный</div><div class="muted" style="font-size: 12px;">утверждённые варианты · 3 шаблона, 24 варианта</div></td><td class="mono" style="font-size: 12.5px;">—</td><td class="mono">0,1 с</td><td><span class="chip c-green">доступен</span></td></tr>
+            </tbody>
+          </table>
+          </div>
+          <div style="height: 6px;"></div>
+        </section>
+        <section class="card" style="padding: 0;">
+          <div style="padding: 16px 18px 6px; display: flex; justify-content: space-between; align-items: center;"><h2 class="h2">Профили песочниц</h2><span class="muted" style="font-size: 12px;">no-new-privileges · cap-drop ALL · read-only rootfs</span></div>
+          <div style="overflow-x: auto;">
+          <table>
+            <thead><tr><th>Профиль</th><th>CPU</th><th>RAM</th><th>Процессы</th><th>Диск /srv</th><th>Сеть</th><th>Активно</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">small</td><td class="mono">1</td><td class="mono">1 ГБ</td><td class="mono">128</td><td class="mono">512 МБ</td><td><span class="chip c-grey">отключена</span></td><td class="mono">14</td></tr>
+              <tr><td class="mono">medium</td><td class="mono">2</td><td class="mono">2 ГБ</td><td class="mono">256</td><td class="mono">1 ГБ</td><td><span class="chip c-grey">отключена</span></td><td class="mono">3</td></tr>
+              <tr><td class="mono">document</td><td colspan="5" class="muted">без контейнера · документный тренажёр</td><td class="mono">9</td></tr>
+            </tbody>
+          </table>
+          </div>
+          <div style="height: 6px;"></div>
+        </section>
+      </div>
+      <aside style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 16px;">
+        <form class="card" style="display: flex; flex-direction: column; gap: 14px;" aria-labelledby="sw">
+          <h2 id="sw" class="h2">Режим генерации</h2>
+          <fieldset class="seg" style="margin: 0; padding: 0;">
+            <legend style="position: absolute; width: 1px; height: 1px; overflow: hidden;">Режим LLM</legend>
+            <label><input type="radio" name="mode"><b style="font-weight: 600;">Внешний</b><span class="muted">основной</span></label>
+            <label style="background: #E6EEFB; color: #1747A6;"><input type="radio" name="mode" checked><b style="font-weight: 600;">Локальный</b><span>резервный</span></label>
+            <label><input type="radio" name="mode"><b style="font-weight: 600;">Шаблонный</b><span class="muted">деградация</span></label>
+          </fieldset>
+          <div class="row" style="align-items: start;"><label for="why" style="padding-top: 10px;">Причина <span style="color: #8C1D18;">*</span></label><textarea id="why" rows="3" style="padding: 10px; resize: vertical;">Внешний провайдер вернул 429, лимит до 12:00.</textarea></div>
+          <button class="btn pri" type="submit">Переключить режим</button>
+          <div style="display: flex; gap: 10px; background: #E6EEFB; color: #1747A6; border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.45;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" style="flex: none;"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.01"></path></svg><span>Активные сессии не прерываются. Переключение записывается в журнал аудита, преподаватели видят предупреждение.</span></div>
+        </form>
+        <section class="card" style="display: flex; flex-direction: column; gap: 10px;">
+          <h2 class="h2">Фоновые задачи</h2>
+          <div style="display: flex; justify-content: space-between;"><span>Генерация сценариев</span><span class="mono">2 в работе</span></div>
+          <div style="display: flex; justify-content: space-between;"><span>Инциденты по расписанию</span><span class="mono">5 ожидают</span></div>
+          <div style="display: flex; justify-content: space-between;"><span>Очистка сред</span><span class="mono">0</span></div>
+          <div style="display: flex; justify-content: space-between;"><span>Контроль бездействия</span><span class="mono">1 пауза</span></div>
+        </section>
+      </aside>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

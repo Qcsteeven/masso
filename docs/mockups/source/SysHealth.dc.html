@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Состояние системы и аудит</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#EEF1F4}
+a{color:#1D5FD1}a:hover{color:#123F8F}
+.nav{flex:1 1 232px;background:#12202C;color:#C3CFDB;box-sizing:border-box;padding:20px 12px;display:flex;flex-direction:column;gap:2px}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 10px 20px;color:#fff;font-weight:700;letter-spacing:.06em;font-size:17px}
+.nl{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#7F93A6;padding:16px 12px 6px}
+.ni{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 12px;border-radius:8px;color:#C3CFDB;text-decoration:none;font-size:14px}
+.ni:hover{background:#1A2E40;color:#fff}
+.ni.on{background:#1D5FD1;color:#fff}
+.main{flex:999 1 560px;min-width:0;display:flex;flex-direction:column}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:16px;justify-content:space-between;padding:14px 32px;background:#fff;border-bottom:1px solid #D5DCE3}
+.card{background:#fff;border:1px solid #D5DCE3;border-radius:10px;padding:16px;box-sizing:border-box;min-width:0}
+.h2{margin:0;font-size:15px;font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:11px;font-size:12px;font-weight:500;white-space:nowrap}
+.c-blue{background:#E6EEFB;color:#1747A6}.c-green{background:#E3F3EA;color:#135C34}.c-amber{background:#FFF3D1;color:#7A4F00}.c-red{background:#FCE8E6;color:#8C1D18}.c-grey{background:#EDF0F3;color:#3B4856}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:8px;font:inherit;font-weight:600;font-size:14px;cursor:pointer;border:1px solid #B9C3CD;background:#fff;color:#14212E;text-decoration:none;box-sizing:border-box;white-space:nowrap}
+.btn.pri{background:#1D5FD1;border-color:#1D5FD1;color:#fff}
+.mono{font-family:'IBM Plex Mono',monospace}
+.muted{color:#556270}
+table{border-collapse:collapse;width:100%}
+th{text-align:left;font-size:11.5px;font-weight:600;color:#556270;text-transform:uppercase;letter-spacing:.06em;padding:9px 12px;border-bottom:1px solid #D5DCE3;white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid #E6EAEE;font-size:13px;vertical-align:middle}
+.svc{display:flex;flex-direction:column;gap:6px}
+.svc .t{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:600}
+.dot{width:9px;height:9px;border-radius:50%;flex:none}
+.bar{height:8px;border-radius:4px;background:#E6EAEE;overflow:hidden}
+.fl{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#3B4856}
+.fl select,.fl input{height:44px;min-width:120px;border:1px solid #B9C3CD;border-radius:8px;padding:0 10px;font:inherit;font-size:14px;font-weight:400;color:#14212E;background:#fff;box-sizing:border-box}
+.cmd{font-family:'IBM Plex Mono',monospace;font-size:12px;background:#F3F5F7;border-radius:4px;padding:1px 5px}
+</style>
+</helmet>
+<div style="min-height: 900px; display: flex; flex-wrap: wrap; font-family: 'IBM Plex Sans', sans-serif; color: #14212E; background: #EEF1F4; font-size: 14px;">
+  <nav class="nav" aria-label="Основное меню">
+    <div class="brand"><svg width="32" height="32" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="10" fill="#1D5FD1"></rect><g stroke="#fff" stroke-width="2.4" fill="none"><path d="M14 15l8 14M30 15l-8 14M14 15h16"></path></g><g fill="#fff"><circle cx="14" cy="15" r="3.8"></circle><circle cx="30" cy="15" r="3.8"></circle><circle cx="22" cy="29" r="3.8"></circle></g></svg>МАССО</div>
+    <div class="nl">Системный администратор</div>
+    <a class="ni on" href="SysHealth.dc.html" aria-current="page"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg>Состояние системы</a>
+    <a class="ni" href="#sandboxes"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 9l3 3-3 3M12 15h5"></path></svg>Учебные среды</a>
+    <a class="ni" href="#security"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg>Аудит и безопасность</a>
+    <div style="flex-grow: 1;"></div>
+    <a class="ni" href="Main.dc.html"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 16l4-4-4-4M14 12H4"></path></svg>Выйти</a>
+  </nav>
+  <div class="main">
+    <header class="top">
+      <div>
+        <h1 style="margin: 0; font-size: 22px; font-weight: 600;">Состояние системы</h1>
+        <div class="muted" style="font-size: 13px;">Обновлено 17.10.2026 09:52:10 · данные /health и /metrics</div>
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;"><a class="btn" href="#metrics">Метрики Prometheus</a><button class="btn" type="button">Резервная копия сейчас</button></div>
+    </header>
+    <main style="padding: 18px 32px 28px; display: flex; flex-direction: column; gap: 16px;">
+      <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px;">
+        <div class="card svc"><div class="t">Backend/API<span class="dot" style="background: #17703F;"></span></div><span class="muted" style="font-size: 12.5px;">p95 ответа 180 мс</span></div>
+        <div class="card svc"><div class="t">PostgreSQL<span class="dot" style="background: #17703F;"></span></div><span class="muted" style="font-size: 12.5px;">копия 03:00 · 4,1 ГБ</span></div>
+        <div class="card svc"><div class="t">Фоновый worker<span class="dot" style="background: #17703F;"></span></div><span class="muted" style="font-size: 12.5px;">пульс 4 с назад</span></div>
+        <div class="card svc"><div class="t">Docker Engine<span class="dot" style="background: #17703F;"></span></div><span class="muted" style="font-size: 12.5px;">17 учебных контейнеров</span></div>
+        <div class="card svc"><div class="t">LLM Gateway<span class="dot" style="background: #B7791F;"></span></div><span class="muted" style="font-size: 12.5px;">локальный режим</span></div>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;">
+        <section class="card" style="flex: 1 1 300px; display: flex; flex-direction: column; gap: 12px;" aria-labelledby="res">
+          <h2 id="res" class="h2">Ресурсы стенда</h2>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; justify-content: space-between;"><span>CPU</span><span class="mono">46 % из 16 vCPU</span></div><div class="bar"><span style="display: block; height: 100%; width: 46%; background: #1D5FD1;"></span></div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; justify-content: space-between;"><span>RAM</span><span class="mono">38 / 64 ГБ</span></div><div class="bar"><span style="display: block; height: 100%; width: 59%; background: #1D5FD1;"></span></div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; justify-content: space-between;"><span>Диск</span><span class="mono">212 / 1000 ГБ</span></div><div class="bar"><span style="display: block; height: 100%; width: 21%; background: #1D5FD1;"></span></div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; justify-content: space-between;"><span>Сессии</span><span class="mono">26 / 50</span></div><div class="bar"><span style="display: block; height: 100%; width: 52%; background: #17703F;"></span></div></div>
+        </section>
+        <section id="sandboxes" class="card" style="flex: 999 1 560px; padding: 0;" aria-labelledby="sb">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px 4px;"><h2 id="sb" class="h2">Учебные среды</h2><span class="muted" style="font-size: 12px;">автоочистка ≤ 30 с после завершения</span></div>
+          <div style="overflow-x: auto;">
+          <table>
+            <thead><tr><th>Сессия</th><th>Пользователь</th><th>Профиль</th><th>Работает</th><th>Состояние</th><th></th></tr></thead>
+            <tbody>
+              <tr><td class="mono">7f3c-21a9</td><td>demonov.la</td><td class="mono">small</td><td class="mono">0:31</td><td><span class="chip c-green">активна</span></td><td></td></tr>
+              <tr><td class="mono">b802-6f11</td><td>petrova.md</td><td class="mono">small</td><td class="mono">0:12</td><td><span class="chip c-amber">пауза</span></td><td></td></tr>
+              <tr><td class="mono">c51d-04e7</td><td>—</td><td class="mono">small</td><td class="mono">3:05</td><td><span class="chip c-red">без сессии</span></td><td style="text-align: right;"><button class="btn" type="button" style="min-height: 34px;">Очистить</button></td></tr>
+            </tbody>
+          </table>
+          </div>
+        </section>
+      </div>
+      <section id="security" class="card" style="padding: 0;" aria-labelledby="sec">
+        <form style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; padding: 14px 16px;" aria-label="Фильтры журнала">
+          <h2 id="sec" class="h2" style="flex: 1 1 220px; align-self: center;">События безопасности и аудит</h2>
+          <label class="fl">Дата начала<input type="text" value="10.10.2026" class="mono"></label>
+          <label class="fl">Дата окончания<input type="text" value="17.10.2026" class="mono"></label>
+          <label class="fl">Журнал<select><option>Безопасность</option><option>Аудит</option></select></label>
+          <button class="btn pri" type="button">Экспорт CSV</button>
+        </form>
+        <div style="overflow-x: auto;">
+        <table>
+          <thead><tr><th>Время</th><th>Severity</th><th>Тип</th><th>Сессия</th><th>Описание</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">16.10 10:13</td><td><span class="chip c-red">high</span></td><td>privilege_escalation</td><td class="mono">a41e-09d2</td><td>Попытка <span class="cmd">sudo -i</span> отклонена</td></tr>
+            <tr><td class="mono">15.10 14:27</td><td><span class="chip c-red">high</span></td><td>sandbox_escape</td><td class="mono">91fa-3c20</td><td>Обращение к <span class="cmd">/var/run/docker.sock</span>: файл отсутствует в среде</td></tr>
+            <tr><td class="mono">15.10 11:02</td><td><span class="chip c-amber">medium</span></td><td>prompt_injection</td><td class="mono">5d77-e1b4</td><td>Запрос подсказки с требованием раскрыть системный промпт; ответ отфильтрован</td></tr>
+            <tr><td class="mono">14.10 09:40</td><td><span class="chip c-amber">medium</span></td><td>network_scan</td><td class="mono">0c3a-8812</td><td>Исходящие соединения на диапазон портов заблокированы, сеть отключена</td></tr>
+          </tbody>
+        </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

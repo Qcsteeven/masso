@@ -23,7 +23,7 @@
    cd masso && git init && git add -A && git commit -m "chore: claude code kit"
    cp .env.example .env          # вписать ключ LLM-провайдера или оставить local/template
    ```
-   Скопируй HTML-макеты из ТП в `docs/mockups/` (см. README там).
+   Макеты экранов уже в `docs/mockups/` (Claude Design, см. README там).
 4. Первый запуск `claude` в каталоге: принять доверие к папке и подключение `context7` из `.mcp.json` (проверка — `/mcp`).
 5. Плагины (по желанию, через `/plugin`): code intelligence для Python и TypeScript — Claude видит ошибки типов сразу после правки; `security-guidance` — доп. проверки на каждое редактирование, полезно для auth и песочницы.
 
