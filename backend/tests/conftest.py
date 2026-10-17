@@ -141,3 +141,28 @@ async def seeded(db: AsyncSession) -> None:
     await import_graph_data(db, json.loads((SEED / "skills.json").read_text("utf-8")), actor_id=None, replace=False)
     await seed_templates(db, SEED / "templates")
     await db.commit()
+
+
+@pytest.fixture
+async def live_server(db: AsyncSession) -> AsyncIterator[str]:
+    """Real uvicorn on a free port in the test event loop (WebSocket tests)."""
+    import asyncio
+    import socket
+
+    import uvicorn
+
+    from app.main import app
+
+    sock = socket.socket()
+    sock.bind(("127.0.0.1", 0))
+    port = sock.getsockname()[1]
+    sock.close()
+    server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning", lifespan="off"))
+    task = asyncio.create_task(server.serve())
+    for _ in range(100):
+        if server.started:
+            break
+        await asyncio.sleep(0.05)
+    yield f"127.0.0.1:{port}"
+    server.should_exit = True
+    await task

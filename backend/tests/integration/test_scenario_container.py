@@ -8,20 +8,11 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.llm_gateway.gateway import LLMGateway
-from app.sandbox.manager import SandboxManager, set_sandbox
+from app.sandbox.manager import SandboxManager
 from app.scenario_agent.graph import ScenarioAgent
 from tests.conftest import SEED
 
 pytestmark = [pytest.mark.docker, pytest.mark.db]
-
-
-@pytest.fixture
-async def real_sandbox(docker_ready: None) -> SandboxManager:
-    m = SandboxManager()
-    set_sandbox(m)
-    yield m
-    set_sandbox(None)
-    await m.close()
 
 
 async def test_generate_web_recovery_validated_by_run(

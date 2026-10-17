@@ -5,7 +5,7 @@ from collections.abc import AsyncIterator
 import aiodocker
 import pytest
 
-from app.sandbox.manager import Profile, SandboxManager
+from app.sandbox.manager import Profile, SandboxManager, set_sandbox
 
 IMAGE = os.environ.get("SANDBOX_IMAGE", "masso/webstack:latest")
 
@@ -36,3 +36,15 @@ async def container(manager: SandboxManager) -> AsyncIterator[str]:
     cid = await manager.create(uuid.uuid4().hex, "test-user", PROFILE, kind="test")
     yield cid
     await manager.remove(cid)
+
+
+@pytest.fixture
+async def real_sandbox(docker_ready: None) -> AsyncIterator[SandboxManager]:
+    """Sandbox Manager injected into the app; removes every session container afterwards."""
+    m = SandboxManager()
+    set_sandbox(m)
+    yield m
+    set_sandbox(None)
+    for c in await m.list_by_label("masso.session"):
+        await m.remove(c["id"])
+    await m.close()
