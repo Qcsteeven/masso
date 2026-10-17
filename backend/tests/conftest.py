@@ -97,8 +97,13 @@ async def db(migrated: None) -> AsyncIterator[AsyncSession]:
 async def client(db: AsyncSession) -> AsyncIterator[AsyncClient]:
     from app.main import app
 
+    from app.sandbox import manager as sm
+
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         yield c
+    if sm._manager is not None and type(sm._manager) is sm.SandboxManager:
+        await sm._manager.close()
+        sm._manager = None
 
 
 async def login(client: AsyncClient, email: str, password: str = "masso-demo") -> dict[str, str]:  # noqa: S107

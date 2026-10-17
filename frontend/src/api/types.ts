@@ -7,3 +7,187 @@ export interface UserBrief {
   roles: Role[];
   group_code: string | null;
 }
+
+export interface TemplateBrief {
+  id: string;
+  code: string;
+  title: string;
+  domain_code: string;
+  kind: "container" | "document";
+  status: "draft" | "published" | "archived";
+  version: number;
+  difficulty: number;
+  time_limit_min: number;
+  validated: boolean;
+  published_at: string | null;
+}
+
+export interface Assignment {
+  id: string;
+  template: TemplateBrief;
+  group_code: string | null;
+  user_id: string | null;
+  due_at: string | null;
+  created_at: string;
+  last_session_id: string | null;
+  last_session_status: SessionStatus | null;
+  last_score: number | null;
+}
+
+export type SessionStatus =
+  | "starting" | "active" | "paused" | "submitted" | "checking" | "completed" | "failed" | "expired";
+
+export interface DocumentPublic { id: string; title: string; markdown: string }
+
+export interface ScenarioPublic {
+  run_id: string;
+  code: string;
+  domain: string;
+  kind: "container" | "document";
+  title: string;
+  legend: string;
+  difficulty: number;
+  time_limit_min: number;
+  criteria: string[];
+  constraints: string;
+  hints_max: number;
+  documents: DocumentPublic[];
+  defect_types: Record<string, string>;
+  answer_form: AnswerForm | Record<string, never>;
+}
+
+export type AnswerForm =
+  | { type: "findings"; sections: Record<string, string>; fields: Record<string, string> }
+  | { type: "reconciliation"; documents: Record<string, string>; fields: Record<string, string> };
+
+export interface SessionEvent {
+  id?: string;
+  type: "status" | "incident" | "hint" | "warning" | "security" | "check" | "answer" | "ping";
+  severity?: "info" | "warning" | "error";
+  payload: Record<string, unknown>;
+  created_at?: string;
+}
+
+export interface SessionView {
+  id: string;
+  run_id: string;
+  status: SessionStatus;
+  kind: "container" | "document";
+  started_at: string | null;
+  finished_at: string | null;
+  time_limit_min: number;
+  remaining_sec: number | null;
+  hints_used: number;
+  hints_max: number;
+  scenario: ScenarioPublic;
+  answers: Record<string, unknown>;
+  events: SessionEvent[];
+}
+
+export interface HintOut { number: number; hint: string; penalty_percent: number; remaining: number; source: string }
+
+export interface SubmitOut { report_id: string; status: string; score: ScoreBlock }
+
+export interface ScoreBlock {
+  base: number;
+  final: number;
+  passed: boolean;
+  critical_failed: boolean;
+  hints: number;
+  violations: number;
+  threshold: number;
+  formula: string;
+}
+
+export interface ReportCheck { id: string; title: string; weight: number; critical: boolean; passed: boolean; skipped: boolean }
+
+export interface SkillChange {
+  skill_id: string;
+  code: string;
+  name: string;
+  level_before: number;
+  level_after: number;
+  success_streak: number;
+  passed: boolean;
+}
+
+export interface ReportPayload {
+  id: string;
+  session_id: string;
+  title: string;
+  domain: string;
+  kind: string;
+  legend: string | null;
+  score: ScoreBlock;
+  checks: ReportCheck[];
+  errors: { check: string; critical: boolean }[];
+  hints: { number: number; text: string; penalty_percent: number; created_at: string }[];
+  incidents: { message: string; created_at: string }[];
+  violations: number;
+  commands: number;
+  time_spent_sec: number;
+  time_limit_min: number;
+  skill_changes: SkillChange[];
+  recommendation: { skill: string; priority: string; template: string | null } | null;
+  teacher: { score: number; reason: string; confirmed: boolean; by: string; at: string; alternative: boolean } | null;
+  created_at: string;
+}
+
+export interface MyReport {
+  id: string;
+  session_id: string;
+  title: string;
+  domain: string;
+  score: number | null;
+  passed: boolean | null;
+  created_at: string;
+}
+
+export interface MySkill {
+  skill_id: string;
+  code: string;
+  name: string;
+  domain_code: string;
+  level: number;
+  level_max: number;
+  required_level: number | null;
+  last_confirmed: string | null;
+  success_streak: number;
+  success_count: number;
+  fail_count: number;
+  outdated: boolean;
+}
+
+export type Priority = "critical" | "high" | "medium" | "low";
+
+export interface Deficit {
+  skill_id: string;
+  code: string;
+  name: string;
+  current_level: number;
+  required_level: number;
+  gap: number;
+  stale: boolean;
+  days_since_confirmed: number | null;
+  dependents: number;
+  priority: Priority;
+}
+
+export interface Recommendations {
+  domain: string;
+  deficits: Deficit[];
+  recommendations: { template_id: string; code: string; title: string; domain_code: string; kind: string; score: number; covers: string[] }[];
+}
+
+export interface RunOut { run_id: string; status: string; generation_mode: string; duration_ms: number }
+
+export const DOMAIN_LABEL: Record<string, string> = {
+  devops: "DevOps и администрирование",
+  security: "Информационная безопасность",
+  legal: "Юриспруденция",
+  audit: "Экономика и аудит",
+};
+
+export const KIND_LABEL: Record<string, string> = { container: "учебная среда", document: "документный тренажёр" };
+
+export const PRIORITY_LABEL: Record<Priority, string> = { critical: "критический", high: "высокий", medium: "средний", low: "низкий" };

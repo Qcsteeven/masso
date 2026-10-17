@@ -53,3 +53,20 @@ async def by_session(session_id: uuid.UUID, user: Me, db: DB) -> dict[str, Any]:
 async def get(report_id: uuid.UUID, user: Me, db: DB) -> dict[str, Any]:
     r = await service.get_report(db, user, report_id=report_id)
     return ok({"id": str(r.id), **r.payload})
+
+
+@router.get("/groups/list")
+async def groups(user: TeacherUser, db: DB) -> dict[str, Any]:
+    from sqlalchemy import select
+
+    from app.deps import can_see_group
+    from app.users.models import User
+
+    codes = sorted(
+        {
+            g
+            for g in (await db.scalars(select(User.group_code).where(User.group_code.is_not(None)))).all()
+            if g and can_see_group(user, g)
+        }
+    )
+    return ok(codes)

@@ -81,6 +81,26 @@ export function PageHeader({ title, subtitle, actions, crumbs }: { title: string
   );
 }
 
+const ROLE_LABEL: Record<Role, string> = {
+  student: "обучающийся", teacher: "преподаватель", methodist: "методист", admin: "администратор", sysadmin: "системный администратор",
+};
+
+export function UserBadge() {
+  const { user } = useAuth();
+  if (!user) return null;
+  const parts = user.full_name.split(/\s+/);
+  const initials = (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "");
+  return (
+    <div className="flex items-center gap-3">
+      <div className="text-right leading-tight">
+        <div className="text-sm font-semibold">{user.full_name}</div>
+        <div className="text-xs text-muted">{user.roles.map((r) => ROLE_LABEL[r]).join(", ")}</div>
+      </div>
+      <span aria-hidden className="grid size-10 place-items-center rounded-full bg-blue-bg text-sm font-semibold text-blue-ink">{initials}</span>
+    </div>
+  );
+}
+
 export function Page({ children, className }: { children: React.ReactNode; className?: string }) {
   return <main className={cx("flex flex-col gap-5 px-8 pb-8 pt-5", className)}>{children}</main>;
 }

@@ -15,7 +15,7 @@ describe("api client", () => {
     expect(data).toEqual({ a: 1 });
     const [url, init] = spy.mock.calls[0];
     expect(url).toBe("/api/x?q=1");
-    expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer tok");
+    expect(((init ?? {}).headers as Record<string, string>).Authorization).toBe("Bearer tok");
   });
 
   it("throws ApiError with russian message", async () => {
@@ -31,7 +31,7 @@ describe("api client", () => {
       .mockImplementationOnce(() => respond({ request_id: "r", status: "success", data: 42 }));
     expect(await api.get<number>("/api/y")).toBe(42);
     expect(spy).toHaveBeenCalledTimes(3);
-    expect((spy.mock.calls[2][1]?.headers as Record<string, string>).Authorization).toBe("Bearer new");
+    expect(((spy.mock.calls[2][1] ?? {}).headers as Record<string, string>).Authorization).toBe("Bearer new");
   });
 
   it("network failure becomes ApiError", async () => {
