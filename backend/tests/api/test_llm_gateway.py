@@ -80,3 +80,30 @@ async def test_switch_mode_api(
     assert r.status_code == 403
     r = await client.post("/api/admin/llm/switch-mode", headers=as_admin, json={"mode": "external"})
     assert r.status_code == 422
+
+
+async def test_degradation_keeps_active_session_and_generation(
+    client: AsyncClient, seeded: None, as_student: dict[str, str], as_admin: dict[str, str], db: AsyncSession
+) -> None:
+    """ТЗ 6.3 «Деградация LLM»: providers down → generation still works, an active session is not interrupted."""
+    from app.llm_gateway.gateway import set_provider_factory
+    from tests.api.test_sessions import _start_doc
+
+    await _mode(db, "external")
+    set_provider_factory(FakeFactory())  # every provider fails
+    try:
+        s = await _start_doc(client, as_student, "legal.supply_contract")
+        assert s["status"] == "active"
+        r = await client.post(
+            "/api/admin/llm/switch-mode",
+            headers=as_admin,
+            json={"mode": "template", "reason": "внешний API недоступен"},
+        )
+        assert r.json()["data"]["generation_mode"] == "template"
+        again = await _start_doc(client, as_student, "audit.invoice_reconciliation")
+        assert again["status"] == "active"
+        view = (await client.get(f"/api/sessions/{s['id']}", headers=as_student)).json()["data"]
+        assert view["status"] == "active"
+        assert (await client.get("/api/llm/status", headers=as_student)).json()["data"]["generation_mode"] == "template"
+    finally:
+        set_provider_factory(None)

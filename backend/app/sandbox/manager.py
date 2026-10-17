@@ -24,6 +24,7 @@ log = logging.getLogger("masso.sandbox")
 LABEL_SESSION = "masso.session"
 LABEL_USER = "masso.user"
 LABEL_KIND = "masso.kind"
+LABEL_INSTANCE = "masso.instance"  # several installations may share one Docker daemon
 MAX_OUTPUT = 64 * 1024
 STUDENT = "student"
 
@@ -88,8 +89,9 @@ def container_config(profile: Profile, labels: dict[str, str]) -> dict[str, Any]
 
 
 class SandboxManager:
-    def __init__(self, url: str | None = None) -> None:
+    def __init__(self, url: str | None = None, instance: str | None = None) -> None:
         self._url = url or get_settings().docker_url
+        self.instance = instance or get_settings().instance_id
         self._docker: aiodocker.Docker | None = None
 
     @property
@@ -115,7 +117,7 @@ class SandboxManager:
     async def create(
         self, session_id: str, user_id: str, profile: Profile, *, kind: str = "session", wait_ready: float = 60.0
     ) -> str:
-        labels = {LABEL_SESSION: session_id, LABEL_USER: user_id, LABEL_KIND: kind}
+        labels = {LABEL_SESSION: session_id, LABEL_USER: user_id, LABEL_KIND: kind, LABEL_INSTANCE: self.instance}
         try:
             container = await self.docker.containers.create(
                 container_config(profile, labels), name=f"masso-{kind}-{session_id[:12]}"
@@ -242,7 +244,9 @@ class SandboxManager:
                 raise SandboxError(f"Не удалось удалить среду: {exc.message}") from exc
 
     async def list_by_label(self, label: str = LABEL_SESSION) -> list[dict[str, Any]]:
-        items = await self.docker.containers.list(all=True, filters={"label": [label]})
+        """Containers of this installation only (filtered by masso.instance as well)."""
+        filters = {"label": [label, f"{LABEL_INSTANCE}={self.instance}"]}
+        items = await self.docker.containers.list(all=True, filters=filters)
         out: list[dict[str, Any]] = []
         for c in items:
             d = c._container

@@ -58,3 +58,15 @@ async def test_remove_drops_volume(manager: SandboxManager) -> None:
     async with aiodocker.Docker() as d:
         with pytest.raises(aiodocker.DockerError):
             await d.volumes.get(volumes[0])
+
+
+async def test_instances_do_not_see_each_other(manager: SandboxManager) -> None:
+    """Two installations on one Docker daemon: the reaper of one must not list the other's containers."""
+    other = SandboxManager(instance="masso-other")
+    cid = await other.create(uuid.uuid4().hex, "u", PROFILE, kind="test")
+    try:
+        assert all(c["id"] != cid for c in await manager.list_by_label("masso.kind=test"))
+        assert any(c["id"] == cid for c in await other.list_by_label("masso.kind=test"))
+    finally:
+        await other.remove(cid)
+        await other.close()

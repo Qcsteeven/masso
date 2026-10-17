@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     llm_timeout_sec: float = 60.0
     embedding_dim: int = 1024
 
+    instance_id: str = "masso"  # label masso.instance: the reaper touches only its own containers
     sandbox_image: str = "masso/webstack:latest"
     sandbox_max_sessions: int = 20
     sandbox_idle_pause_min: int = 15

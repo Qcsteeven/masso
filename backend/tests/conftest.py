@@ -14,6 +14,7 @@ os.environ.setdefault("WORKER_ENABLED", "false")
 os.environ.setdefault("JWT_SECRET", "test-secret-test-secret-test-secret-123")
 os.environ.setdefault("SEED_DEFAULT_PASSWORD", "masso-demo")
 os.environ.setdefault("LLM_GENERATION_MODE", "template")
+os.environ.setdefault("INSTANCE_ID", "masso-test")  # never reap containers of a running dev stack
 TEST_DB = os.environ.get("TEST_DATABASE_URL", "postgresql+asyncpg://masso:masso@localhost:5433/masso_test")
 os.environ["DATABASE_URL"] = TEST_DB
 
