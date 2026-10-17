@@ -87,6 +87,7 @@ def _optional_routers() -> list[Any]:
         "app.llm_gateway.router",
         "app.scenarios.router",
         "app.sessions.router",
+        "app.assessment_agent.router",
         "app.events.router",
         "app.verification.router",
         "app.reports.router",

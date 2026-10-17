@@ -25,7 +25,7 @@ def register(name: str, job: Job) -> None:
 def _load_jobs() -> None:
     import importlib
 
-    for mod in ("app.sessions.jobs",):
+    for mod in ("app.sessions.jobs", "app.assessment_agent.jobs"):
         try:
             importlib.import_module(mod)
         except ModuleNotFoundError as exc:
