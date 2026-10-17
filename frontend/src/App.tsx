@@ -54,6 +54,7 @@ const router = createBrowserRouter([
       { path: "/teacher/assignments", element: g(["teacher"], page(() => import("./pages/teacher/Assignments"))) },
       { path: "/teacher/export", element: g(["teacher"], page(() => import("./pages/teacher/Export"))) },
       { path: "/methodist/skills", element: g(["methodist", "admin"], page(() => import("./pages/methodist/SkillGraph"))) },
+      { path: "/methodist/targets", element: g(["methodist", "admin"], page(() => import("./pages/methodist/Targets"))) },
       { path: "/methodist/templates", element: g(["methodist", "admin"], page(() => import("./pages/methodist/Templates"))) },
       { path: "/methodist/templates/:id", element: g(["methodist", "admin"], page(() => import("./pages/methodist/TemplateEditor"))) },
       { path: "/admin/users", element: g(["admin"], page(() => import("./pages/admin/Users"))) },

@@ -241,3 +241,21 @@ export interface TraceEvent {
 
 export const REVIEW_LABEL: Record<ReviewStatus, string> = { pending: "ожидает", confirmed: "подтверждена", corrected: "скорректирована" };
 export const REVIEW_TONE = { pending: "amber", confirmed: "green", corrected: "blue" } as const;
+
+export type SkillStatus = "draft" | "active" | "deprecated" | "archived";
+export interface SkillNode { id: string; code: string; domain_code: string; name: string; description: string; level_max: number; status: SkillStatus; dependents: number }
+export interface SkillGraph {
+  domains: { code: string; name: string; description: string; skills_count: number }[];
+  skills: SkillNode[];
+  edges: { skill_id: string; requires_skill_id: string; weight: number }[];
+  targets: { domain_code: string; skill_id: string; required_level: number }[];
+  acyclic: boolean;
+}
+export const SKILL_STATUS_LABEL: Record<SkillStatus, string> = { draft: "черновик", active: "активен", deprecated: "устаревший", archived: "в архиве" };
+
+export interface ValidationStep { step: string; ok: boolean; detail: string; duration_ms: number }
+export interface TemplateFull extends TemplateBrief {
+  spec: Record<string, unknown>;
+  validation_report: { status: string; version: number; steps: ValidationStep[]; errors: string[]; generation_mode: string; duration_ms: number; validated_at: string } | null;
+  created_at: string;
+}

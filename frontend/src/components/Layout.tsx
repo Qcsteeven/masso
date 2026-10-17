@@ -21,6 +21,7 @@ const NAV: { role: Role; title: string; items: NavItem[] }[] = [
   { role: "methodist", title: "Методист", items: [
     { to: "/methodist/skills", label: "Граф компетенций", icon: "graph" },
     { to: "/methodist/templates", label: "Шаблоны сценариев", icon: "template" },
+    { to: "/methodist/targets", label: "Целевые уровни", icon: "target" },
   ] },
   { role: "admin", title: "Администратор", items: [
     { to: "/admin/users", label: "Пользователи и роли", icon: "users" },
