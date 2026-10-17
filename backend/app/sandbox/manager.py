@@ -73,7 +73,7 @@ def container_config(profile: Profile, labels: dict[str, str]) -> dict[str, Any]
             "SecurityOpt": ["no-new-privileges"],
             "Privileged": False,
             "ReadonlyRootfs": True,
-            "Tmpfs": {"/tmp": "rw,nosuid,nodev,size=64m", "/run": "rw,nosuid,nodev,size=8m"},
+            "Tmpfs": {"/tmp": "rw,nosuid,nodev,size=64m", "/run": "rw,nosuid,nodev,size=8m"},  # noqa: S108
             "Memory": profile.mem_mb * 1024 * 1024,
             "MemorySwap": profile.mem_mb * 1024 * 1024,
             "NanoCpus": int(profile.cpu * 1_000_000_000),
