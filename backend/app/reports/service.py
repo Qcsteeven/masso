@@ -48,6 +48,12 @@ async def get_report(
     return r
 
 
+async def report_owner(db: AsyncSession, r: Report) -> dict[str, Any]:
+    s = await db.get(LearningSession, r.session_id)
+    u = await db.get(User, s.user_id) if s else None
+    return {"id": str(u.id), "full_name": u.full_name, "group": u.group_code} if u else {}
+
+
 async def my_reports(db: AsyncSession, user: CurrentUser) -> list[dict[str, Any]]:
     rows = (
         await db.execute(

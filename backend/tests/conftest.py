@@ -96,7 +96,6 @@ async def db(migrated: None) -> AsyncIterator[AsyncSession]:
 @pytest.fixture
 async def client(db: AsyncSession) -> AsyncIterator[AsyncClient]:
     from app.main import app
-
     from app.sandbox import manager as sm
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:

@@ -151,7 +151,7 @@ async def test_teacher_correction_and_reports(
     assert r.json()["data"]["review_status"] == "corrected"
     assert await db.scalar(select(AuditLog).where(AuditLog.action == "verification.correct")) is not None
     rep = (await client.get(f"/api/reports/by-session/{s['id']}", headers=as_student)).json()["data"]
-    assert rep["teacher"]["score"] == 80
+    assert rep["teacher"]["score"] == 80 and rep["student"]["group"] == "ИСИб-23-1"
     r = await client.get("/api/reports", headers=as_teacher)
     assert r.json()["error"]["code"] == "REPORT_PERIOD_REQUIRED"
     now = datetime.now(UTC)

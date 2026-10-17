@@ -130,6 +130,7 @@ export interface ReportPayload {
   skill_changes: SkillChange[];
   recommendation: { skill: string; priority: string; template: string | null } | null;
   teacher: { score: number; reason: string; confirmed: boolean; by: string; at: string; alternative: boolean } | null;
+  student?: { id: string; full_name: string; group: string | null };
   created_at: string;
 }
 
@@ -191,3 +192,52 @@ export const DOMAIN_LABEL: Record<string, string> = {
 export const KIND_LABEL: Record<string, string> = { container: "учебная среда", document: "документный тренажёр" };
 
 export const PRIORITY_LABEL: Record<Priority, string> = { critical: "критический", high: "высокий", medium: "средний", low: "низкий" };
+
+export type ReviewStatus = "pending" | "confirmed" | "corrected";
+
+export interface GroupOverview {
+  period: { from: string; to: string };
+  group: string | null;
+  kpi: { sessions: number; students: number; avg_score: number | null; median_score: number | null; hints_per_session: number; pending_review: number };
+  problem_skills: { skill_id: string; name: string; fail_percent: number; sessions: number }[];
+  sessions: {
+    session_id: string;
+    student: string;
+    student_id: string;
+    group: string | null;
+    title: string;
+    domain: string;
+    finished_at: string | null;
+    auto_score: number;
+    expert_score: number | null;
+    review_status: ReviewStatus;
+    verification_status: string;
+    hints: number;
+  }[];
+}
+
+export interface VerificationOut {
+  session_id: string;
+  checks: (ReportCheck & { type: string; judge?: unknown })[];
+  base_score: number;
+  final_score: number;
+  status: string;
+  errors: { check: string; critical: boolean }[];
+  corrected_score: number | null;
+  correction_reason: string | null;
+  corrected_by: string | null;
+  review_status: ReviewStatus;
+  created_at: string;
+}
+
+export interface TraceEvent {
+  id: string;
+  session_id: string;
+  type: string;
+  severity: "info" | "warning" | "error" | "critical";
+  payload: Record<string, unknown>;
+  created_at: string;
+}
+
+export const REVIEW_LABEL: Record<ReviewStatus, string> = { pending: "ожидает", confirmed: "подтверждена", corrected: "скорректирована" };
+export const REVIEW_TONE = { pending: "amber", confirmed: "green", corrected: "blue" } as const;

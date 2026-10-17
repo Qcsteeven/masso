@@ -46,7 +46,7 @@ async def mine(user: StudentUser, db: DB) -> dict[str, Any]:
 @router.get("/by-session/{session_id}")
 async def by_session(session_id: uuid.UUID, user: Me, db: DB) -> dict[str, Any]:
     r = await service.get_report(db, user, session_id=session_id)
-    return ok({"id": str(r.id), **r.payload})
+    return ok({"id": str(r.id), **r.payload, "student": await service.report_owner(db, r)})
 
 
 @router.get("/{report_id}")
