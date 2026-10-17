@@ -112,6 +112,33 @@ async def patch_user(db: AsyncSession, actor: CurrentUser, user_id: uuid.UUID, b
     return to_out(user)
 
 
+async def revoke_sessions(db: AsyncSession, actor: CurrentUser, user_id: uuid.UUID) -> int:
+    """Revoke all refresh tokens of the user: they must log in again after the access token expires."""
+    from datetime import UTC, datetime
+
+    from sqlalchemy import update
+
+    from app.auth.models import RefreshToken
+
+    user = await get_user(db, user_id)
+    res = await db.execute(
+        update(RefreshToken)
+        .where(RefreshToken.user_id == user.id, RefreshToken.revoked_at.is_(None))
+        .values(revoked_at=datetime.now(UTC))
+    )
+    n = int(getattr(res, "rowcount", 0) or 0)
+    record_audit(
+        db,
+        actor_id=actor.id,
+        action="user.revoke_sessions",
+        object_type="user",
+        object_id=str(user.id),
+        after={"revoked": n},
+    )
+    await db.commit()
+    return n
+
+
 async def put_roles(db: AsyncSession, actor: CurrentUser, user_id: uuid.UUID, body: RolesPut) -> UserOut:
     user = await get_user(db, user_id)
     before = user.role_codes

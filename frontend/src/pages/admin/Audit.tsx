@@ -1,11 +1,11 @@
 import { Page, PageHeader } from "../../components/Layout";
-import { Empty } from "../../components/ui";
+import { SecurityLog } from "./SecurityLog";
 
 export default function Audit() {
   return (
     <>
-      <PageHeader title="Audit" />
-      <Page><Empty>Экран в разработке (фаза 8).</Empty></Page>
+      <PageHeader title="Аудит и безопасность" subtitle="Журнал действий пользователей и события безопасности учебных сред" />
+      <Page><SecurityLog /></Page>
     </>
   );
 }

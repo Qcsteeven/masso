@@ -60,6 +60,7 @@ const router = createBrowserRouter([
       { path: "/admin/users", element: g(["admin"], page(() => import("./pages/admin/Users"))) },
       { path: "/admin/llm", element: g(["admin"], page(() => import("./pages/admin/Llm"))) },
       { path: "/admin/audit", element: g(["admin", "sysadmin"], page(() => import("./pages/admin/Audit"))) },
+      { path: "/sysadmin/audit", element: g(["sysadmin"], page(() => import("./pages/admin/Audit"))) },
       { path: "/sysadmin", element: g(["sysadmin", "admin"], page(() => import("./pages/sysadmin/Health"))) },
     ],
   },

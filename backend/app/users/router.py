@@ -41,6 +41,11 @@ async def put_roles(user_id: uuid.UUID, body: RolesPut, admin: AdminUser, db: DB
     return ok((await service.put_roles(db, admin, user_id, body)).model_dump(mode="json"))
 
 
+@router.post("/{user_id}/revoke-sessions")
+async def revoke_sessions(user_id: uuid.UUID, admin: AdminUser, db: DB) -> dict[str, Any]:
+    return ok({"revoked": await service.revoke_sessions(db, admin, user_id)})
+
+
 @router.get("/{user_id}/audit")
 async def audit(user_id: uuid.UUID, admin: AdminUser, db: DB) -> dict[str, Any]:
     rows = await service.user_audit(db, user_id)

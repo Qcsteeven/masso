@@ -99,3 +99,17 @@ async def test_validation_error_envelope(client: AsyncClient, as_admin: dict[str
 async def test_unknown_route_not_found(client: AsyncClient) -> None:
     r = await client.get("/api/nope")
     assert r.status_code == 404 and r.json()["error"]["code"] == "NOT_FOUND"
+
+
+async def test_admin_revokes_sessions(client: AsyncClient, as_admin: dict[str, str], db: AsyncSession) -> None:
+    admin_cookie = client.cookies.get("masso_refresh")
+    await login(client, "petrova.md@masso.local")
+    student_cookie = client.cookies.get("masso_refresh")
+    users = (await client.get("/api/users", params={"q": "петрова"}, headers=as_admin)).json()["data"]["items"]
+    r = await client.post(f"/api/users/{users[0]['id']}/revoke-sessions", headers=as_admin)
+    assert r.json()["data"]["revoked"] >= 1
+    client.cookies.clear()
+    client.cookies.set("masso_refresh", student_cookie or "", path="/api/auth")
+    assert (await client.post("/api/auth/refresh")).status_code == 401
+    assert await db.scalar(select(AuditLog).where(AuditLog.action == "user.revoke_sessions")) is not None
+    assert admin_cookie is not None

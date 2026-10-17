@@ -30,6 +30,7 @@ const NAV: { role: Role; title: string; items: NavItem[] }[] = [
   ] },
   { role: "sysadmin", title: "Системный администратор", items: [
     { to: "/sysadmin", label: "Состояние системы", icon: "activity", end: true },
+    { to: "/sysadmin/audit", label: "Аудит и безопасность", icon: "shield" },
   ] },
 ];
 
