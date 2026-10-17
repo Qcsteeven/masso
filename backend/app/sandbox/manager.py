@@ -104,7 +104,7 @@ class SandboxManager:
             self._docker = None
 
     async def ping(self) -> dict[str, Any]:
-        info: dict[str, Any] = await self.docker.system.info()
+        info = dict(await self.docker.system.info())
         return {
             "server_version": info.get("ServerVersion"),
             "containers_running": info.get("ContainersRunning"),
