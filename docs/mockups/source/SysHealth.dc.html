@@ -54,25 +54,25 @@ td{padding:9px 12px;border-bottom:1px solid #E6EAEE;font-size:13px;vertical-alig
     <header class="top">
       <div>
         <h1 style="margin: 0; font-size: 22px; font-weight: 600;">Состояние системы</h1>
-        <div class="muted" style="font-size: 13px;">Обновлено 17.10.2026 09:52:10 · данные /health и /metrics</div>
+        <div class="muted" style="font-size: 13px;">Обновлено ДД.ММ.ГГГГ ЧЧ:ММ:СС · данные /health и /metrics</div>
       </div>
       <div style="display: flex; gap: 10px; flex-wrap: wrap;"><a class="btn" href="#metrics">Метрики Prometheus</a><button class="btn" type="button">Резервная копия сейчас</button></div>
     </header>
     <main style="padding: 18px 32px 28px; display: flex; flex-direction: column; gap: 16px;">
       <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px;">
-        <div class="card svc"><div class="t">Backend/API<span class="dot" style="background: #17703F;"></span></div><span class="muted" style="font-size: 12.5px;">p95 ответа 180 мс</span></div>
-        <div class="card svc"><div class="t">PostgreSQL<span class="dot" style="background: #17703F;"></span></div><span class="muted" style="font-size: 12.5px;">копия 03:00 · 4,1 ГБ</span></div>
-        <div class="card svc"><div class="t">Фоновый worker<span class="dot" style="background: #17703F;"></span></div><span class="muted" style="font-size: 12.5px;">пульс 4 с назад</span></div>
-        <div class="card svc"><div class="t">Docker Engine<span class="dot" style="background: #17703F;"></span></div><span class="muted" style="font-size: 12.5px;">17 учебных контейнеров</span></div>
+        <div class="card svc"><div class="t">Backend/API<span class="dot" style="background: #17703F;"></span></div><span class="muted" style="font-size: 12.5px;">p95 ответа NNN мс</span></div>
+        <div class="card svc"><div class="t">PostgreSQL<span class="dot" style="background: #17703F;"></span></div><span class="muted" style="font-size: 12.5px;">копия ЧЧ:ММ · N,N ГБ</span></div>
+        <div class="card svc"><div class="t">Фоновый worker<span class="dot" style="background: #17703F;"></span></div><span class="muted" style="font-size: 12.5px;">пульс N с назад</span></div>
+        <div class="card svc"><div class="t">Docker Engine<span class="dot" style="background: #17703F;"></span></div><span class="muted" style="font-size: 12.5px;">N учебных контейнеров</span></div>
         <div class="card svc"><div class="t">LLM Gateway<span class="dot" style="background: #B7791F;"></span></div><span class="muted" style="font-size: 12.5px;">локальный режим</span></div>
       </div>
       <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;">
         <section class="card" style="flex: 1 1 300px; display: flex; flex-direction: column; gap: 12px;" aria-labelledby="res">
           <h2 id="res" class="h2">Ресурсы стенда</h2>
-          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; justify-content: space-between;"><span>CPU</span><span class="mono">46 % из 16 vCPU</span></div><div class="bar"><span style="display: block; height: 100%; width: 46%; background: #1D5FD1;"></span></div></div>
-          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; justify-content: space-between;"><span>RAM</span><span class="mono">38 / 64 ГБ</span></div><div class="bar"><span style="display: block; height: 100%; width: 59%; background: #1D5FD1;"></span></div></div>
-          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; justify-content: space-between;"><span>Диск</span><span class="mono">212 / 1000 ГБ</span></div><div class="bar"><span style="display: block; height: 100%; width: 21%; background: #1D5FD1;"></span></div></div>
-          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; justify-content: space-between;"><span>Сессии</span><span class="mono">26 / 50</span></div><div class="bar"><span style="display: block; height: 100%; width: 52%; background: #17703F;"></span></div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; justify-content: space-between;"><span>CPU</span><span class="mono">NN % из N vCPU</span></div><div class="bar"><span style="display: block; height: 100%; width: 46%; background: #1D5FD1;"></span></div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; justify-content: space-between;"><span>RAM</span><span class="mono">NN / NN ГБ</span></div><div class="bar"><span style="display: block; height: 100%; width: 59%; background: #1D5FD1;"></span></div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; justify-content: space-between;"><span>Диск</span><span class="mono">NNN / NNNN ГБ</span></div><div class="bar"><span style="display: block; height: 100%; width: 21%; background: #1D5FD1;"></span></div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; justify-content: space-between;"><span>Сессии</span><span class="mono">NN / NN</span></div><div class="bar"><span style="display: block; height: 100%; width: 52%; background: #17703F;"></span></div></div>
         </section>
         <section id="sandboxes" class="card" style="flex: 999 1 560px; padding: 0;" aria-labelledby="sb">
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px 4px;"><h2 id="sb" class="h2">Учебные среды</h2><span class="muted" style="font-size: 12px;">автоочистка ≤ 30 с после завершения</span></div>
@@ -80,9 +80,9 @@ td{padding:9px 12px;border-bottom:1px solid #E6EAEE;font-size:13px;vertical-alig
           <table>
             <thead><tr><th>Сессия</th><th>Пользователь</th><th>Профиль</th><th>Работает</th><th>Состояние</th><th></th></tr></thead>
             <tbody>
-              <tr><td class="mono">7f3c-21a9</td><td>demonov.la</td><td class="mono">small</td><td class="mono">0:31</td><td><span class="chip c-green">активна</span></td><td></td></tr>
-              <tr><td class="mono">b802-6f11</td><td>petrova.md</td><td class="mono">small</td><td class="mono">0:12</td><td><span class="chip c-amber">пауза</span></td><td></td></tr>
-              <tr><td class="mono">c51d-04e7</td><td>—</td><td class="mono">small</td><td class="mono">3:05</td><td><span class="chip c-red">без сессии</span></td><td style="text-align: right;"><button class="btn" type="button" style="min-height: 34px;">Очистить</button></td></tr>
+              <tr><td class="mono">&lt;id&gt;</td><td>login.1</td><td class="mono">small</td><td class="mono">Ч:ММ</td><td><span class="chip c-green">активна</span></td><td></td></tr>
+              <tr><td class="mono">&lt;id&gt;</td><td>login.2</td><td class="mono">small</td><td class="mono">Ч:ММ</td><td><span class="chip c-amber">пауза</span></td><td></td></tr>
+              <tr><td class="mono">&lt;id&gt;</td><td>—</td><td class="mono">small</td><td class="mono">Ч:ММ</td><td><span class="chip c-red">без сессии</span></td><td style="text-align: right;"><button class="btn" type="button" style="min-height: 34px;">Очистить</button></td></tr>
             </tbody>
           </table>
           </div>
@@ -91,8 +91,8 @@ td{padding:9px 12px;border-bottom:1px solid #E6EAEE;font-size:13px;vertical-alig
       <section id="security" class="card" style="padding: 0;" aria-labelledby="sec">
         <form style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; padding: 14px 16px;" aria-label="Фильтры журнала">
           <h2 id="sec" class="h2" style="flex: 1 1 220px; align-self: center;">События безопасности и аудит</h2>
-          <label class="fl">Дата начала<input type="text" value="10.10.2026" class="mono"></label>
-          <label class="fl">Дата окончания<input type="text" value="17.10.2026" class="mono"></label>
+          <label class="fl">Дата начала<input type="text" value="ДД.ММ.ГГГГ" class="mono"></label>
+          <label class="fl">Дата окончания<input type="text" value="ДД.ММ.ГГГГ" class="mono"></label>
           <label class="fl">Журнал<select><option>Безопасность</option><option>Аудит</option></select></label>
           <button class="btn pri" type="button">Экспорт CSV</button>
         </form>
@@ -100,10 +100,10 @@ td{padding:9px 12px;border-bottom:1px solid #E6EAEE;font-size:13px;vertical-alig
         <table>
           <thead><tr><th>Время</th><th>Severity</th><th>Тип</th><th>Сессия</th><th>Описание</th></tr></thead>
           <tbody>
-            <tr><td class="mono">16.10 10:13</td><td><span class="chip c-red">high</span></td><td>privilege_escalation</td><td class="mono">a41e-09d2</td><td>Попытка <span class="cmd">sudo -i</span> отклонена</td></tr>
-            <tr><td class="mono">15.10 14:27</td><td><span class="chip c-red">high</span></td><td>sandbox_escape</td><td class="mono">91fa-3c20</td><td>Обращение к <span class="cmd">/var/run/docker.sock</span>: файл отсутствует в среде</td></tr>
-            <tr><td class="mono">15.10 11:02</td><td><span class="chip c-amber">medium</span></td><td>prompt_injection</td><td class="mono">5d77-e1b4</td><td>Запрос подсказки с требованием раскрыть системный промпт; ответ отфильтрован</td></tr>
-            <tr><td class="mono">14.10 09:40</td><td><span class="chip c-amber">medium</span></td><td>network_scan</td><td class="mono">0c3a-8812</td><td>Исходящие соединения на диапазон портов заблокированы, сеть отключена</td></tr>
+            <tr><td class="mono">ДД.ММ ЧЧ:ММ</td><td><span class="chip c-red">high</span></td><td>privilege_escalation</td><td class="mono">&lt;id&gt;</td><td>Попытка <span class="cmd">&lt;команда&gt;</span> отклонена</td></tr>
+            <tr><td class="mono">ДД.ММ ЧЧ:ММ</td><td><span class="chip c-red">high</span></td><td>sandbox_escape</td><td class="mono">&lt;id&gt;</td><td>Обращение к <span class="cmd">&lt;путь&gt;</span>: файл отсутствует в среде</td></tr>
+            <tr><td class="mono">ДД.ММ ЧЧ:ММ</td><td><span class="chip c-amber">medium</span></td><td>prompt_injection</td><td class="mono">&lt;id&gt;</td><td>Описание события безопасности</td></tr>
+            <tr><td class="mono">ДД.ММ ЧЧ:ММ</td><td><span class="chip c-amber">medium</span></td><td>network_scan</td><td class="mono">&lt;id&gt;</td><td>Описание события безопасности</td></tr>
           </tbody>
         </table>
         </div>

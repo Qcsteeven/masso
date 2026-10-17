@@ -54,7 +54,7 @@ td{padding:10px 12px;border-bottom:1px solid #E6EAEE;font-size:14px;vertical-ali
   <div class="main">
     <div role="status" style="display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 10px 32px; background: #FFF3D1; color: #5C3B00; font-size: 13px; border-bottom: 1px solid #F0D68A;">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18v.01"></path></svg>
-      <span style="flex: 1 1 400px;"><b>LLM-контур переключён в локальный режим</b> в 08:15 администратором. Активные сессии продолжаются; новые сценарии генерируются локальной моделью.</span>
+      <span style="flex: 1 1 400px;"><b>LLM-контур переключён в локальный режим</b> в ЧЧ:ММ администратором. Активные сессии продолжаются; новые сценарии генерируются локальной моделью.</span>
     </div>
     <header class="top">
       <div>
@@ -62,25 +62,25 @@ td{padding:10px 12px;border-bottom:1px solid #E6EAEE;font-size:14px;vertical-ali
         <div class="muted" style="font-size: 13px;">Результаты сессий, проблемные навыки и расхождения оценок</div>
       </div>
       <div style="display: flex; align-items: center; gap: 12px;">
-        <div style="text-align: right;"><div style="font-weight: 600;">Шипицин Д. С.</div><div class="muted" style="font-size: 12px;">преподаватель</div></div>
-        <div class="av">ШД</div>
+        <div style="text-align: right;"><div style="font-weight: 600;">Фамилия И. О.</div><div class="muted" style="font-size: 12px;">преподаватель</div></div>
+        <div class="av">ФИ</div>
       </div>
     </header>
     <main style="padding: 20px 32px 32px; display: flex; flex-direction: column; gap: 20px;">
       <form class="card" style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; padding: 16px 20px;" aria-label="Фильтры">
-        <label class="fl">Группа<select><option>ИСИб-23-1</option></select></label>
+        <label class="fl">Группа<select><option>Группа</option></select></label>
         <label class="fl">Направление<select><option>Все направления</option></select></label>
-        <label class="fl">Дата начала<input type="text" value="06.10.2026" class="mono"></label>
-        <label class="fl">Дата окончания<input type="text" value="17.10.2026" class="mono"></label>
+        <label class="fl">Дата начала<input type="text" value="ДД.ММ.ГГГГ" class="mono"></label>
+        <label class="fl">Дата окончания<input type="text" value="ДД.ММ.ГГГГ" class="mono"></label>
         <div style="flex-grow: 1;"></div>
         <button class="btn" type="button">Сбросить</button>
         <button class="btn pri" type="submit">Применить</button>
       </form>
       <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px;">
-        <div class="card kpi"><span class="muted">Завершённых сессий</span><b>46</b><span class="muted" style="font-size: 12px;">22 обучающихся</span></div>
-        <div class="card kpi"><span class="muted">Средний балл</span><b>78</b><span class="muted" style="font-size: 12px;">медиана 81</span></div>
-        <div class="card kpi"><span class="muted">Подсказок на сессию</span><b>1,4</b><span class="muted" style="font-size: 12px;">лимит 3</span></div>
-        <div class="card kpi"><span class="muted">Ждут решения</span><b style="color: #8C1D18;">3</b><span class="muted" style="font-size: 12px;">расхождение с экспертом</span></div>
+        <div class="card kpi"><span class="muted">Завершённых сессий</span><b>NN</b><span class="muted" style="font-size: 12px;">N обучающихся</span></div>
+        <div class="card kpi"><span class="muted">Средний балл</span><b>NN</b><span class="muted" style="font-size: 12px;">медиана NN</span></div>
+        <div class="card kpi"><span class="muted">Подсказок на сессию</span><b>N,N</b><span class="muted" style="font-size: 12px;">лимит N</span></div>
+        <div class="card kpi"><span class="muted">Ждут решения</span><b style="color: #8C1D18;">N</b><span class="muted" style="font-size: 12px;">расхождение с экспертом</span></div>
       </div>
       <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;">
         <section class="card" style="flex: 999 1 600px; padding: 0;">
@@ -89,12 +89,12 @@ td{padding:10px 12px;border-bottom:1px solid #E6EAEE;font-size:14px;vertical-ali
           <table>
             <thead><tr><th>Обучающийся</th><th>Сценарий</th><th>Дата</th><th>Авто</th><th>Статус оценки</th><th></th></tr></thead>
             <tbody>
-              <tr><td>Иванов А. С.</td><td>Восстановление веб-сервиса</td><td class="mono">16.10</td><td class="mono">49</td><td><span class="chip c-red">расхождение</span></td><td><a href="TeacherTrace.dc.html">След</a></td></tr>
-              <tr><td>Демонов Л. А.</td><td>Восстановление веб-сервиса</td><td class="mono">17.10</td><td class="mono">81</td><td><span class="chip c-amber">ожидает</span></td><td><a href="TeacherTrace.dc.html">След</a></td></tr>
-              <tr><td>Петрова М. Д.</td><td>Проверка договора поставки</td><td class="mono">15.10</td><td class="mono">92</td><td><span class="chip c-green">подтверждена</span></td><td><a href="TeacherTrace.dc.html">След</a></td></tr>
-              <tr><td>Ким Е. А.</td><td>Сверка первичных документов</td><td class="mono">15.10</td><td class="mono">64</td><td><span class="chip c-blue">скорректирована</span></td><td><a href="TeacherTrace.dc.html">След</a></td></tr>
-              <tr><td>Орлова Д. П.</td><td>Расследование подозрительного входа</td><td class="mono">14.10</td><td class="mono">88</td><td><span class="chip c-green">подтверждена</span></td><td><a href="TeacherTrace.dc.html">След</a></td></tr>
-              <tr><td>Захаров Н. И.</td><td>Проверка договора поставки</td><td class="mono">13.10</td><td class="mono">57</td><td><span class="chip c-red">расхождение</span></td><td><a href="TeacherTrace.dc.html">След</a></td></tr>
+              <tr><td>Обучающийся 1</td><td>Сценарий A</td><td class="mono">ДД.ММ</td><td class="mono">NN</td><td><span class="chip c-red">расхождение</span></td><td><a href="TeacherTrace.dc.html">След</a></td></tr>
+              <tr><td>Обучающийся 2</td><td>Сценарий A</td><td class="mono">ДД.ММ</td><td class="mono">NN</td><td><span class="chip c-amber">ожидает</span></td><td><a href="TeacherTrace.dc.html">След</a></td></tr>
+              <tr><td>Обучающийся 3</td><td>Сценарий B</td><td class="mono">ДД.ММ</td><td class="mono">NN</td><td><span class="chip c-green">подтверждена</span></td><td><a href="TeacherTrace.dc.html">След</a></td></tr>
+              <tr><td>Обучающийся 4</td><td>Сценарий C</td><td class="mono">ДД.ММ</td><td class="mono">NN</td><td><span class="chip c-blue">скорректирована</span></td><td><a href="TeacherTrace.dc.html">След</a></td></tr>
+              <tr><td>Обучающийся 5</td><td>Сценарий D</td><td class="mono">ДД.ММ</td><td class="mono">NN</td><td><span class="chip c-green">подтверждена</span></td><td><a href="TeacherTrace.dc.html">След</a></td></tr>
+              <tr><td>Обучающийся 6</td><td>Сценарий B</td><td class="mono">ДД.ММ</td><td class="mono">NN</td><td><span class="chip c-red">расхождение</span></td><td><a href="TeacherTrace.dc.html">След</a></td></tr>
             </tbody>
           </table>
           </div>
@@ -102,11 +102,11 @@ td{padding:10px 12px;border-bottom:1px solid #E6EAEE;font-size:14px;vertical-ali
         <section class="card" style="flex: 1 1 360px; display: flex; flex-direction: column; gap: 14px;">
           <h2 class="h2">Проблемные навыки</h2>
           <span class="muted" style="font-size: 13px;">Доля непройденных проверок по навыку</span>
-          <div class="sk"><span>Диагностика прокси Nginx</span><div class="bar"><span style="display: block; height: 100%; width: 58%; background: #B3261E;"></span></div><span class="mono">58%</span></div>
-          <div class="sk"><span>Работа с логами сервисов</span><div class="bar"><span style="display: block; height: 100%; width: 41%; background: #B7791F;"></span></div><span class="mono">41%</span></div>
-          <div class="sk"><span>Сверка первичных документов</span><div class="bar"><span style="display: block; height: 100%; width: 33%; background: #B7791F;"></span></div><span class="mono">33%</span></div>
-          <div class="sk"><span>Анализ договорных условий</span><div class="bar"><span style="display: block; height: 100%; width: 19%; background: #1D5FD1;"></span></div><span class="mono">19%</span></div>
-          <div class="sk"><span>Права доступа в Linux</span><div class="bar"><span style="display: block; height: 100%; width: 12%; background: #1D5FD1;"></span></div><span class="mono">12%</span></div>
+          <div class="sk"><span>Навык 1</span><div class="bar"><span style="display: block; height: 100%; width: 58%; background: #B3261E;"></span></div><span class="mono">NN%</span></div>
+          <div class="sk"><span>Навык 2</span><div class="bar"><span style="display: block; height: 100%; width: 41%; background: #B7791F;"></span></div><span class="mono">NN%</span></div>
+          <div class="sk"><span>Навык 3</span><div class="bar"><span style="display: block; height: 100%; width: 33%; background: #B7791F;"></span></div><span class="mono">NN%</span></div>
+          <div class="sk"><span>Навык 4</span><div class="bar"><span style="display: block; height: 100%; width: 19%; background: #1D5FD1;"></span></div><span class="mono">NN%</span></div>
+          <div class="sk"><span>Навык 5</span><div class="bar"><span style="display: block; height: 100%; width: 12%; background: #1D5FD1;"></span></div><span class="mono">NN%</span></div>
           <button class="btn" type="button">Назначить сценарий группе</button>
         </section>
       </div>

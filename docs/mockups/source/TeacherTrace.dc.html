@@ -53,16 +53,16 @@ td{padding:9px 12px;border-bottom:1px solid #E6EAEE;font-size:13px;vertical-alig
   <div class="main">
     <header class="top">
       <div>
-        <div class="muted" style="font-size: 13px;"><a href="TeacherGroup.dc.html">ИСИб-23-1</a> · Иванов А. С. · сессия <span class="mono">a41e-09d2</span> · 16.10.2026</div>
-        <h1 style="margin: 0; font-size: 22px; font-weight: 600;">Цифровой след: восстановление веб-сервиса</h1>
+        <div class="muted" style="font-size: 13px;"><a href="TeacherGroup.dc.html">Группа</a> · Обучающийся · сессия <span class="mono">&lt;id&gt;</span> · ДД.ММ.ГГГГ</div>
+        <h1 style="margin: 0; font-size: 22px; font-weight: 600;">Цифровой след: название сценария</h1>
       </div>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap;"><span class="chip c-red">критическая проверка не пройдена</span><span class="chip c-grey">подсказок 1</span><span class="chip c-grey">36 мин</span></div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;"><span class="chip c-red">критическая проверка не пройдена</span><span class="chip c-grey">подсказок N</span><span class="chip c-grey">NN мин</span></div>
     </header>
     <main style="padding: 20px 32px 32px; display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;">
       <div style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column; gap: 16px;">
         <form class="card" style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; padding: 16px 20px;" aria-label="Фильтры журнала">
-          <label class="fl">Время с<input type="text" value="10:00" class="mono" style="min-width: 96px; width: 96px;"></label>
-          <label class="fl">Время по<input type="text" value="10:40" class="mono" style="min-width: 96px; width: 96px;"></label>
+          <label class="fl">Время с<input type="text" value="ЧЧ:ММ" class="mono" style="min-width: 96px; width: 96px;"></label>
+          <label class="fl">Время по<input type="text" value="ЧЧ:ММ" class="mono" style="min-width: 96px; width: 96px;"></label>
           <label class="fl">Тип события<select><option>Все типы</option><option>Команда</option><option>Изменение файла</option><option>Инцидент</option><option>Подсказка</option><option>Проверка</option><option>Безопасность</option></select></label>
           <label class="fl">Severity<select><option>info и выше</option></select></label>
           <div style="flex-grow: 1;"></div>
@@ -73,15 +73,15 @@ td{padding:9px 12px;border-bottom:1px solid #E6EAEE;font-size:13px;vertical-alig
           <table>
             <thead><tr><th>Время</th><th>Тип</th><th>Severity</th><th>Событие</th></tr></thead>
             <tbody>
-              <tr><td class="mono">10:02:11</td><td><span class="chip c-grey">команда</span></td><td class="muted">info</td><td><span class="cmd">supervisorctl status</span></td></tr>
-              <tr><td class="mono">10:03:40</td><td><span class="chip c-grey">команда</span></td><td class="muted">info</td><td><span class="cmd">tail -n 50 /srv/log/store-api.err.log</span></td></tr>
-              <tr><td class="mono">10:05:52</td><td><span class="chip c-grey">команда</span></td><td class="muted">info</td><td><span class="cmd">psql -h 127.0.0.1 -U store_admin -c "CREATE ROLE shop_app LOGIN …"</span></td></tr>
-              <tr><td class="mono">10:06:02</td><td><span class="chip c-blue">файл</span></td><td class="muted">info</td><td>Изменён <span class="cmd">/srv/app/.env</span>: пользователь подключения store → shop_app</td></tr>
-              <tr style="background: #FFFBEF;"><td class="mono">10:07:15</td><td><span class="chip c-amber">инцидент</span></td><td style="color: #7A4F00;">warning</td><td>Сервис возвращает HTTP 502 на /api/health</td></tr>
-              <tr><td class="mono">10:09:30</td><td><span class="chip c-blue">подсказка</span></td><td class="muted">info</td><td>Подсказка 1 из 3 выдана (−10 %)</td></tr>
-              <tr><td class="mono">10:12:44</td><td><span class="chip c-blue">файл</span></td><td class="muted">info</td><td>Изменён <span class="cmd">/srv/nginx/conf.d/store.conf</span>: upstream 8001 → 8000</td></tr>
-              <tr style="background: #FFF6F5;"><td class="mono">10:13:02</td><td><span class="chip c-red">безопасность</span></td><td style="color: #8C1D18;">high</td><td>Попытка <span class="cmd">sudo -i</span> отклонена политикой среды</td></tr>
-              <tr><td class="mono">10:38:20</td><td><span class="chip c-grey">проверка</span></td><td class="muted">info</td><td>4 из 5 проверок; не пройдена критическая «подключение под пользователем store»</td></tr>
+              <tr><td class="mono">ЧЧ:ММ:СС</td><td><span class="chip c-grey">команда</span></td><td class="muted">info</td><td><span class="cmd">&lt;команда&gt;</span></td></tr>
+              <tr><td class="mono">ЧЧ:ММ:СС</td><td><span class="chip c-grey">команда</span></td><td class="muted">info</td><td><span class="cmd">&lt;команда&gt;</span></td></tr>
+              <tr><td class="mono">ЧЧ:ММ:СС</td><td><span class="chip c-grey">команда</span></td><td class="muted">info</td><td><span class="cmd">&lt;команда&gt;</span></td></tr>
+              <tr><td class="mono">ЧЧ:ММ:СС</td><td><span class="chip c-blue">файл</span></td><td class="muted">info</td><td>Изменён <span class="cmd">&lt;путь к файлу&gt;</span>: краткое описание изменения</td></tr>
+              <tr style="background: #FFFBEF;"><td class="mono">ЧЧ:ММ:СС</td><td><span class="chip c-amber">инцидент</span></td><td style="color: #7A4F00;">warning</td><td>Описание инцидента</td></tr>
+              <tr><td class="mono">ЧЧ:ММ:СС</td><td><span class="chip c-blue">подсказка</span></td><td class="muted">info</td><td>Подсказка N из N выдана (−10 %)</td></tr>
+              <tr><td class="mono">ЧЧ:ММ:СС</td><td><span class="chip c-blue">файл</span></td><td class="muted">info</td><td>Изменён <span class="cmd">&lt;путь к файлу&gt;</span>: краткое описание изменения</td></tr>
+              <tr style="background: #FFF6F5;"><td class="mono">ЧЧ:ММ:СС</td><td><span class="chip c-red">безопасность</span></td><td style="color: #8C1D18;">high</td><td>Попытка <span class="cmd">&lt;запрещённая команда&gt;</span> отклонена политикой среды</td></tr>
+              <tr><td class="mono">ЧЧ:ММ:СС</td><td><span class="chip c-grey">проверка</span></td><td class="muted">info</td><td>N из N проверок; не пройдена критическая «Критерий 2»</td></tr>
             </tbody>
           </table>
           </div>
@@ -90,20 +90,20 @@ td{padding:9px 12px;border-bottom:1px solid #E6EAEE;font-size:13px;vertical-alig
       <aside style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 16px;">
         <section class="card" style="display: flex; flex-direction: column; gap: 12px;">
           <h2 class="h2">Автоматическая оценка</h2>
-          <div style="display: flex; align-items: baseline; gap: 10px;"><b style="font-size: 34px; line-height: 1;">49</b><span class="muted">потолок при провале критической проверки</span></div>
+          <div style="display: flex; align-items: baseline; gap: 10px;"><b style="font-size: 34px; line-height: 1;">NN</b><span class="muted">потолок при провале критической проверки</span></div>
           <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
-            <div style="display: flex; justify-content: space-between; gap: 8px;"><span>HTTP 200 на /api/health</span><span class="chip c-green">пройдена</span></div>
-            <div style="display: flex; justify-content: space-between; gap: 8px;"><span>Подключение под пользователем store</span><span class="chip c-red">не пройдена</span></div>
-            <div style="display: flex; justify-content: space-between; gap: 8px;"><span>Все сервисы RUNNING</span><span class="chip c-green">пройдена</span></div>
+            <div style="display: flex; justify-content: space-between; gap: 8px;"><span>Критерий 1</span><span class="chip c-green">пройдена</span></div>
+            <div style="display: flex; justify-content: space-between; gap: 8px;"><span>Критерий 2</span><span class="chip c-red">не пройдена</span></div>
+            <div style="display: flex; justify-content: space-between; gap: 8px;"><span>Критерий 3</span><span class="chip c-green">пройдена</span></div>
           </div>
-          <div style="background: #E6EEFB; color: #1747A6; border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.45;">Обнаружен путь решения, не описанный в эталоне: создан новый пользователь базы данных вместо исправления пароля.</div>
+          <div style="background: #E6EEFB; color: #1747A6; border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.45;">Обнаружен путь решения, не описанный в эталоне: краткое описание отличия от эталонного исправления.</div>
         </section>
         <form class="card" style="display: flex; flex-direction: column; gap: 14px;" aria-labelledby="corr">
           <h2 id="corr" class="h2">Решение преподавателя</h2>
-          <div class="row"><label for="score">Экспертная оценка</label><input id="score" type="text" value="78" class="mono"></div>
-          <div class="row" style="align-items: start;"><label for="reason" style="padding-top: 10px;">Причина изменения <span style="color: #8C1D18;">*</span></label><textarea id="reason" rows="6" style="resize: vertical;">Сервис восстановлен, проверка пароля сохранена. Принято как альтернативный путь; снижено за лишнюю учётную запись в БД.</textarea></div>
+          <div class="row"><label for="score">Экспертная оценка</label><input id="score" type="text" value="NN" class="mono"></div>
+          <div class="row" style="align-items: start;"><label for="reason" style="padding-top: 10px;">Причина изменения <span style="color: #8C1D18;">*</span></label><textarea id="reason" rows="6" style="resize: vertical;">Обоснование изменения оценки (обязательно).</textarea></div>
           <div class="row"><span></span><label style="display: flex; gap: 8px; align-items: center;"><input type="checkbox" checked style="width: 18px; height: 18px; margin: 0;">Отметить как альтернативное решение</label></div>
-          <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;"><button class="btn" type="button">Подтвердить 49</button><button class="btn pri" type="submit">Сохранить корректировку</button></div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;"><button class="btn" type="button">Подтвердить авто-оценку</button><button class="btn pri" type="submit">Сохранить корректировку</button></div>
           <span class="muted" style="font-size: 12px;">Изменение записывается в журнал аудита вместе с причиной.</span>
         </form>
       </aside>
