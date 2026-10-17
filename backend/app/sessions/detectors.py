@@ -7,6 +7,15 @@ _SUSPICIOUS: list[tuple[str, re.Pattern[str]]] = [
     ("privilege_escalation", re.compile(r"(^|[;&|\s])(sudo|su|doas|pkexec)(\s|$)")),
     ("network_scan", re.compile(r"\b(nmap|masscan|zmap)\b|\bnc\s+-[a-z]*z|\bping\s+-f\b")),
     ("forbidden_file", re.compile(r"/etc/shadow|/root/|\.ssh/")),
+    # writes into system directories (the rootfs is read-only anyway; the attempt is still recorded)
+    (
+        "forbidden_file",
+        re.compile(
+            r"(>>?|\btee(\s+-a)?)\s*/(etc|usr|bin|sbin|lib|boot)/"
+            r"|\b(touch|rm|chmod|chown|sed\s+-i\S*)\b[^;&|]*\s/(etc|usr|bin|sbin|lib|boot)/"
+            r"|\b(cp|mv|ln)\b[^;&|]*\s/(etc|usr|bin|sbin|lib|boot)/\S*\s*($|[;&|])"
+        ),
+    ),
 ]
 
 _INJECTION = re.compile(

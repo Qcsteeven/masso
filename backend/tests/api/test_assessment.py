@@ -10,13 +10,15 @@ from app.audit.models import AuditLog, SecurityEvent
 from app.llm_gateway.fake import FakeFactory, FakeProvider
 from app.llm_gateway.gateway import set_provider_factory
 from app.llm_gateway.models import LLMSettings
+from app.profile_agent import service as profile
 from app.scenarios.generators import reference_answer
-from app.scenarios.models import ScenarioRun
+from app.scenarios.models import ScenarioRun, ScenarioTemplate
 from app.scenarios.spec import AnswerItem, parse_spec
 from app.sessions import jobs
 from app.sessions.models import LearningSession
 from app.sessions.service import now_utc
 from app.skills.models import UserSkill
+from app.users.models import User
 from tests.conftest import login
 
 pytestmark = pytest.mark.db
@@ -73,13 +75,38 @@ async def test_audit_wrong_sum_fails_numeric(
     assert res["score"]["critical_failed"] and res["score"]["final"] <= 49 and not res["score"]["passed"]
 
 
+async def test_audit_correct_answer_full_score(
+    client: AsyncClient, seeded: None, as_student: dict[str, str], db: AsyncSession
+) -> None:
+    s = await _start(client, as_student, "audit.invoice_reconciliation")
+    answers = await _ideal(db, s["id"], with_incident=False)
+    await client.post(f"/api/sessions/{s['id']}/answers", headers=as_student, json={"answers": answers})
+    res = (await client.post(f"/api/sessions/{s['id']}/submit", headers=as_student)).json()["data"]
+    assert res["score"]["final"] == 100 and res["score"]["passed"] and not res["score"]["critical_failed"]
+
+
+async def test_three_successes_level_up_audited(seeded: None, db: AsyncSession) -> None:
+    user = await db.scalar(select(User).where(User.email == "demonov.la@masso.local"))
+    tpl = await db.scalar(select(ScenarioTemplate).where(ScenarioTemplate.code == "audit.invoice_reconciliation"))
+    assert user and tpl
+    t0 = datetime(2026, 10, 1, tzinfo=UTC)
+    for day in range(3):
+        changes = await profile.apply_result(db, user.id, tpl.id, passed=True, now=t0 + timedelta(days=day))
+    await db.commit()
+    assert changes and all(c.level_before == 0 and c.level_after == 1 for c in changes)
+    logs = (await db.scalars(select(AuditLog).where(AuditLog.action == "skill.level_up"))).all()
+    assert len(logs) == len(changes) and all(entry.after == {"level": 1} for entry in logs)
+
+
 async def test_hint_limit_and_penalty(
     client: AsyncClient, seeded: None, as_student: dict[str, str], db: AsyncSession
 ) -> None:
     s = await _start(client, as_student, "audit.invoice_reconciliation")
     for n in (1, 2, 3):
+        t0 = time.monotonic()
         r = await client.post(f"/api/sessions/{s['id']}/hints", headers=as_student, json={"question": "с чего начать?"})
         assert r.status_code == 200 and r.json()["data"]["number"] == n
+        assert time.monotonic() - t0 < 30
     r = await client.post(f"/api/sessions/{s['id']}/hints", headers=as_student, json={})
     assert r.status_code == 409 and r.json()["error"]["code"] == "HINT_LIMIT_EXCEEDED"
     answers = await _ideal(db, s["id"], with_incident=False)

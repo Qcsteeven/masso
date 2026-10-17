@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.audit.service import record_audit
 from app.profile_agent import algorithms as alg
 from app.scenarios.models import ScenarioRun, ScenarioTemplate, TemplateSkill
 from app.sessions.models import LearningSession
@@ -133,7 +134,7 @@ class SkillChange:
 async def apply_result(
     db: AsyncSession, user_id: uuid.UUID, template_id: uuid.UUID, passed: bool, now: datetime | None = None
 ) -> list[SkillChange]:
-    """Update user_skills for every TARGETS skill of the template. Caller commits."""
+    """Update user_skills for every TARGETS skill of the template; a level change is audited. Caller commits."""
     now = now or datetime.now(UTC)
     targets = (await db.scalars(select(TemplateSkill).where(TemplateSkill.template_id == template_id))).all()
     changes: list[SkillChange] = []
@@ -155,6 +156,17 @@ async def apply_result(
             after.success_count,
             after.fail_count,
         )
+        if after.level != before.level:
+            record_audit(
+                db,
+                actor_id=None,
+                action="skill.level_up",
+                object_type="user_skill",
+                object_id=f"{user_id}:{skill.code}",
+                before={"level": before.level},
+                after={"level": after.level},
+                reason="ProfileAgent: три успешных подтверждения подряд",
+            )
         changes.append(
             SkillChange(skill.id, skill.code, skill.name, before.level, after.level, after.success_streak, passed)
         )

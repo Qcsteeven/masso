@@ -8,6 +8,7 @@ from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.audit.models import SecurityEvent
 from app.events.models import EnvironmentEvent
 from app.sandbox.manager import SandboxManager
 from app.sessions import jobs
@@ -57,17 +58,30 @@ async def test_terminal_commands_incident_cleanup(
         await ws.send(b"echo hi-$((40+2))\n")
         out = await _read_until(ws, "hi-42")
         assert "hi-42" in out
-        await ws.send(b"sudo -i\n")
-        await asyncio.sleep(1.5)
+        # attack attempts from spec §12 «Безопасность sandbox»: all fail inside the container
+        for cmd in ("sudo -i", "cat /var/run/docker.sock", "nmap -sS 10.0.0.0/24", "touch /etc/pwned"):
+            await ws.send(cmd.encode() + b"\n")
+        await ws.send(b"echo done-$((1+1))\n")
+        await _read_until(ws, "done-2")
+    assert not (await real_sandbox.exec(cid, "test -e /etc/pwned")).ok
     await jobs.commands_job(now_utc())
     evs = (await db.scalars(select(EnvironmentEvent).where(EnvironmentEvent.session_id == row.id))).all()
     cmds = [e.payload.get("cmd") for e in evs if e.type == "command"]
     assert "echo hi-$((40+2))" in cmds
-    assert any(e.type == "security" and e.payload.get("kind") == "privilege_escalation" for e in evs)
-    # incident at due time breaks the proxy
+    kinds = {e.payload.get("kind") for e in evs if e.type == "security"}
+    assert kinds == {"privilege_escalation", "sandbox_escape", "network_scan", "forbidden_file"}
+    sec = (await db.scalars(select(SecurityEvent).where(SecurityEvent.session_id == row.id))).all()
+    assert {e.kind for e in sec} == kinds
+    # incident at due time breaks the proxy; the event is stored for the digital footprint and WS
     await jobs.incidents_job(now_utc() + timedelta(minutes=6))
     conf = await real_sandbox.exec(cid, "grep -c 'server 127.0.0.1:8001;' /srv/nginx/store.conf")
     assert conf.output.strip() == "1"
+    await db.refresh(row)
+    assert row.incident_applied_at is not None
+    inc = await db.scalars(
+        select(EnvironmentEvent).where(EnvironmentEvent.session_id == row.id, EnvironmentEvent.type == "incident")
+    )
+    assert inc.first() is not None
 
 
 async def test_foreign_student_cannot_open_terminal(
