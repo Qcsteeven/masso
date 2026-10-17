@@ -35,11 +35,13 @@ target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "N", "S", "ASYNC", "RUF"]
-ignore = ["RUF001", "RUF002", "RUF003", "S101", "B008", "RUF012", "ASYNC109"]
+ignore = ["RUF001", "RUF002", "RUF003", "S101", "B008", "RUF012", "ASYNC109", "S311"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S105", "S106", "S108", "S603", "S607"]
 "migrations/**" = ["E501", "RUF100"]
+"app/scenarios/generators.py" = ["E501"]
+"tests/**/test_*.py" = ["E501", "S105", "S106", "S108"]
 
 [tool.mypy]
 python_version = "3.13"

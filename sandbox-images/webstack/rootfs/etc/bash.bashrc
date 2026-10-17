@@ -3,7 +3,7 @@
 shopt -s checkwinsize histappend
 HISTCONTROL=ignoredups
 PS1='\[\e[32m\]\u@masso-srv\[\e[0m\]:\[\e[34m\]\w\[\e[0m\]\$ '
-export PATH=/usr/lib/postgresql/15/bin:$PATH PGHOST=/srv/run PGUSER=student PGDATABASE=postgres
+export PATH=/usr/lib/postgresql/15/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PGHOST=/srv/run PGUSER=student PGDATABASE=postgres
 [ -f /etc/bash_completion ] && . /etc/bash_completion
 # Command trail for the digital footprint (read by MASSO via exec): epoch<TAB>pwd<TAB>command
 __masso_log() {

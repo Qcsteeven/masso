@@ -125,3 +125,19 @@ async def as_teacher(client: AsyncClient) -> dict[str, str]:
 @pytest.fixture
 async def as_methodist(client: AsyncClient) -> dict[str, str]:
     return await login(client, "methodist@masso.local")
+
+
+SEED = __import__("pathlib").Path(__file__).parents[1] / "seed"
+
+
+@pytest.fixture
+async def seeded(db: AsyncSession) -> None:
+    """Competency graph + scenario templates from backend/seed."""
+    import json
+
+    from app.scenarios.seed import seed_templates
+    from app.skills.service import import_graph_data
+
+    await import_graph_data(db, json.loads((SEED / "skills.json").read_text("utf-8")), actor_id=None, replace=False)
+    await seed_templates(db, SEED / "templates")
+    await db.commit()

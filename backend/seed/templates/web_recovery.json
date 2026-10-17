@@ -1,0 +1,69 @@
+{
+  "kind": "container",
+  "code": "devops.web_recovery",
+  "version": 1,
+  "domain": "devops",
+  "title": "Восстановление веб-сервиса после сбоя",
+  "target_skills": [
+    {"skill": "OPS.INCIDENT", "weight": 0.4},
+    {"skill": "DB.PG.CLIENT", "weight": 0.3},
+    {"skill": "WEB.NGINX.DIAG", "weight": 0.3}
+  ],
+  "difficulty": 3,
+  "time_limit_min": 40,
+  "profile": "small",
+  "legend": {
+    "template": "Интернет-магазин «{company}» недоступен: покупатели видят ошибку вместо каталога. По словам дежурного, ночью на сервере меняли настройки. Восстановите работу магазина на учебном сервере: найдите причину по состоянию служб и журналам и устраните её. Нельзя пересоздавать базу данных и отключать проверку пароля. Документация сервера — /srv/docs/README.md.",
+    "brief": "Напиши легенду учебного инцидента от лица руководителя смены: магазин {company} недоступен после ночных изменений настроек. 3–4 предложения, без подсказок о причине и без команд. Упомяни, что нельзя пересоздавать базу данных и отключать проверку пароля, и что документация сервера лежит в /srv/docs/README.md.",
+    "llm_generated": true
+  },
+  "params": {"company": ["ТехноМаркет", "Северный двор", "Байкал-Электро", "Кедр и К", "Ангарский пассаж"]},
+  "faults": {
+    "initial": ["db_wrong_password", "db_wrong_user"],
+    "catalog": {
+      "db_wrong_password": {
+        "description": "Опечатка в пароле БД в /srv/app/.env",
+        "apply": "sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=Shop-2026-store/' /srv/app/.env && supervisorctl restart store-api; true",
+        "fix": "sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=Sh0p-2026-store/' /srv/app/.env && supervisorctl restart store-api; true"
+      },
+      "db_wrong_user": {
+        "description": "Неверный пользователь БД в /srv/app/.env",
+        "apply": "sed -i 's/^DB_USER=.*/DB_USER=shop/' /srv/app/.env && supervisorctl restart store-api; true",
+        "fix": "sed -i 's/^DB_USER=.*/DB_USER=store/' /srv/app/.env && supervisorctl restart store-api; true"
+      },
+      "nginx_wrong_upstream": {
+        "description": "Прокси передаёт запросы на неверный порт",
+        "apply": "sed -i 's/server 127.0.0.1:8000;/server 127.0.0.1:8001;/' /srv/nginx/store.conf && supervisorctl restart nginx; true",
+        "fix": "sed -i 's/server 127.0.0.1:8001;/server 127.0.0.1:8000;/' /srv/nginx/store.conf && supervisorctl restart nginx; true"
+      }
+    }
+  },
+  "incidents": [
+    {"id": "inc_502", "after_min": [2, 5], "fault": "nginx_wrong_upstream",
+     "message": "Покупатели снова видят 502 Bad Gateway. Дежурный только что «оптимизировал» конфигурацию прокси."}
+  ],
+  "checks": [
+    {"id": "health", "title": "Магазин отвечает HTTP 200 через прокси", "type": "http_health", "weight": 40, "critical": true,
+     "params": {"url": "http://127.0.0.1:8080/health", "status": 200}},
+    {"id": "app_running", "title": "Служба store-api работает", "type": "docker_exec", "weight": 20,
+     "params": {"cmd": "supervisorctl status store-api", "expect_regex": "RUNNING"}},
+    {"id": "password_auth", "title": "Проверка пароля в PostgreSQL не отключена", "type": "docker_exec", "weight": 15, "critical": true,
+     "params": {"cmd": "grep -E '^[[:space:]]*host' /srv/pgdata/pg_hba.conf", "expect_regex": "scram-sha-256|md5", "forbid_regex": "trust"}},
+    {"id": "nginx_config", "title": "Конфигурация прокси корректна", "type": "docker_exec", "weight": 15,
+     "params": {"cmd": "nginx -t -c /srv/nginx/nginx.conf", "exit_code": 0}},
+    {"id": "container_ok", "title": "Сервер работает без аварийных перезапусков", "type": "docker_inspect", "weight": 10,
+     "params": {"state": "running", "max_restarts": 0}}
+  ],
+  "hints": {"policy": "limited_3", "ladder": [
+    "Начните с того, какие службы на сервере не в состоянии RUNNING, и прочитайте их журналы.",
+    "Сравните параметры подключения приложения к базе данных с эталонными значениями из документации сервера.",
+    "Когда приложение заработает, проверьте магазин именно через прокси и выясните, куда прокси передаёт запросы."
+  ]},
+  "success": {"threshold": 75},
+  "constraints": "Пользователь без прав администратора · сеть отключена · изменять можно только файлы в /srv · лимиты профиля small",
+  "variants": [
+    {"params": {"company": "ТехноМаркет"}, "legend": "Ночью дежурный администратор «ТехноМаркета» поменял настройки сервера, и к утру магазин перестал открываться: вместо каталога покупатели видят ошибку. Восстановите работу магазина на учебном сервере, разобравшись по состоянию служб и журналам. Базу данных пересоздавать нельзя, отключать проверку пароля — тоже. Описание сервера — в /srv/docs/README.md."},
+    {"params": {"company": "Северный двор"}, "legend": "Руководитель смены «Северного двора» сообщает: после ночных работ интернет-магазин недоступен, заказы не принимаются. Найдите причину сбоя на учебном сервере и устраните её. Пересоздавать базу данных и ослаблять проверку пароля запрещено. Документация — /srv/docs/README.md."},
+    {"params": {"company": "Байкал-Электро"}, "legend": "Утром служба поддержки «Байкал-Электро» получила десятки жалоб: сайт магазина не работает. Ночью на сервере что-то настраивали. Верните магазин в строй, не пересоздавая базу и не отключая проверку пароля. Подробности о сервере — в /srv/docs/README.md."}
+  ]
+}
