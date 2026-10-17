@@ -148,9 +148,9 @@
 - README: развёртывание на чистой Linux-ВМ, демо-аккаунты, сценарий демонстрации на защите (5 минут).
 
 **Готово, когда:**
-- [ ] Все строки §12 имеют результат в test-report.md
-- [ ] Чистая ВМ: `git clone && cp .env.example .env && make up && make seed` → демо работает
-- [ ] doc-updates.md покрывает все записи DEVIATIONS.md
+- [x] Все строки §12 имеют результат в test-report.md
+- [x] Чистая ВМ: `git clone && cp .env.example .env && make up && make seed` → демо работает (облачная имитация, см. test-report «Чистая ВМ»; на Linux-ВМ с репозиторными Dockerfile — проверить на стенде)
+- [x] doc-updates.md покрывает все записи DEVIATIONS.md
 
 ---
 

@@ -28,6 +28,7 @@ python scripts/loadtest.py # нагрузка, система поднята (ma
 | `make check`: линтеры и типизация (ruff, ruff format, mypy strict, oxlint, tsc) | без замечаний |
 | Backend unit + API (`tests/unit`, `tests/api`) | **120 passed**, 0 failed, 0 skipped, 29 с (после исправлений по нагрузке и ревью безопасности; первый прогон дня — 102) |
 | Frontend unit (vitest) | **10 passed** (4 файла) |
+| Frontend e2e (Playwright, чистый стенд) | **9 passed** |
 | Интеграционные с Docker (`-m docker tests/integration tests/e2e`) | **14 passed**, 0 failed (первый прогон дня — 11 из 11; добавлены тесты ревью безопасности) |
 
 ## Испытания ТЗ 6.3 → автотесты
@@ -36,7 +37,7 @@ python scripts/loadtest.py # нагрузка, система поднята (ma
 
 | № | Испытание ТЗ 6.3 | Критерий (спека §12) | Тест (файл::функция) | Результат | Дата |
 |---|---|---|---|---|---|
-| 1 | Жизненный цикл DevOps | login → generate → session → исправление → submit → report, статус completed, балл 100 | `tests/integration/test_devops_e2e.py::test_devops_full_cycle`; отрицательный — `::test_devops_unfixed_fails` (без исправления критическая проверка провалена); UI — `frontend/e2e/student-devops.spec.ts` | Пройден (pytest). Playwright-сценарий — см. раздел «Чистая ВМ» | 17.10.2026 |
+| 1 | Жизненный цикл DevOps | login → generate → session → исправление → submit → report, статус completed, балл 100 | `tests/integration/test_devops_e2e.py::test_devops_full_cycle`; отрицательный — `::test_devops_unfixed_fails` (без исправления критическая проверка провалена); UI — `frontend/e2e/student-devops.spec.ts` | Пройден (pytest и Playwright на чистом стенде, см. раздел «Чистая ВМ») | 17.10.2026 |
 | 2 | Юридический кейс | e2e с FakeLLM-пакетом документов → 100; один прогон с реальным LLM | `tests/api/test_assessment.py::test_legal_full_cycle`; `tests/unit/test_generators_engine.py::test_legal_reference_answer_passes_and_quotes_present`, `::test_legal_incident_requires_new_finding`; `tests/api/test_scenarios.py::test_generate_document_template_mode[legal.supply_contract]` | Пройден (FakeLLM / шаблонный режим). **Прогон с реальным LLM — проверить на стенде** (`scripts/llm_smoke.py`, ключа провайдера в облаке нет) | 17.10.2026 |
 | 3 | Аудиторский кейс | правильный ответ → 100; неверная сумма → провал numeric_match | `tests/api/test_assessment.py::test_audit_correct_answer_full_score`, `::test_audit_wrong_sum_fails_numeric`; `tests/unit/test_generators_engine.py::test_audit_arithmetic_consistent` (20 вариантов), `::test_numeric_parsing_accepts_russian_format` | Пройден | 17.10.2026 |
 | 4 | Динамический инцидент | incident_due_at в прошлом → worker применил fault, событие в БД и в WS | `tests/integration/test_session_container.py::test_terminal_commands_incident_cleanup` (контейнер: конфигурация nginx сломана, `incident_applied_at` заполнено, событие `incident` в `environment_events`); `tests/api/test_sessions.py::test_ws_events_auth_and_push` (событие `incident` пришло по WS); `tests/api/test_sessions.py::test_document_session_lifecycle` (срок ≤ 5 мин, документ изменён) | Пройден | 17.10.2026 |
@@ -95,7 +96,24 @@ python scripts/loadtest.py # нагрузка, система поднята (ma
 
 Не исправлено (осознанно, записано в DEVIATIONS или оставлено на вторую очередь): журнал команд можно отключить изнутри среды (`unset PROMPT_COMMAND`) — след команд вспомогательный, оценка по итоговым проверкам; при обрыве соединения во время генерации подсказки номер и штраф уже засчитаны, а текст (ступень лестницы) виден в цифровом следе только после завершения запроса; `--forwarded-allow-ips='*'` безопасен, пока порт backend не опубликован (так в compose); исчерпание inode квота не ловит; блокировку входа по IP за общим NAT класса настраивают `LOGIN_MAX_FAILURES_PER_IP`; квота диска реактивная — заполнение до проверки (≤ 60 с) возможно, для стенда рекомендуется вынести `data-root` Docker на отдельный раздел (README); токен WS многоразовый в течение 60 с (привязан к сессии и пользователю, короткий срок) и попадает в журнал доступа uvicorn — оставлено до второй очереди.
 
+## Проверка «чистая ВМ»
+
+17.10.2026, облачный контейнер (имитация чистой ВМ): `docker compose down -v`, удалены образы `masso-*` и `masso/webstack`, затем `git clone` репозитория с GitHub (коммит `10a583e`) в пустой каталог и шаги README:
+
+| Шаг README | Результат |
+|---|---|
+| `cp .env.example .env` (без правок) | backend стартует в `prod`; в журнале предупреждение «JWT_SECRET … a random secret is used», `/api/docs` закрыт (404) |
+| `make up` | образы собраны `scripts/dev/cloud-build.sh` из того же клона (облачная замена `docker compose build`, см. примечание 1), `docker compose up -d`; миграции применены при старте |
+| `make seed` сразу после `make up` | выполнен с первого раза; повторный запуск идемпотентен |
+| `make sandbox-image` | образ собран из клона с облачной заменой базы (примечание 1) |
+| `GET /api/health` | `db: ok`, worker тикает |
+| Сценарий защиты из README (скрипт по API и WS-терминалу, дословно команды README) | назначение группе → генерация и старт → `supervisorctl status` (store-api BACKOFF) → журнал (`password authentication failed for user "shop"`) → `diff` с `.env.example` → исправление `sed` → `/health` = `{"status": "ok"}` → подсказка без команд → `sudo -i` заблокирован (событие `privilege_escalation`) → инцидент «502 Bad Gateway» через ≈ 167 с → исправление upstream → отправка, проверка за 1,0 с: все 5 проверок пройдены, балл 80 = 100 × (1 − 0,1 × 1) − 10 × 1, контейнер удалён → цифровой след у преподавателя (command, hint, incident, security, status, check), подтверждение оценки → переключение режима LLM администратором → событие `sudo -i` в журнале безопасности у `ops` |
+| Playwright `make e2e` (`E2E_BASE_URL=http://localhost`) | **9 passed** из 9: вход и навигация с клавиатуры, Escape в подтверждении отправки, экраны всех пяти ролей, запрет экранов персонала для студента, DevOps-сценарий в браузерном терминале до протокола |
+
+**Проверить на стенде (Linux-ВМ):** `make up` и `make sandbox-image` с репозиторными Dockerfile (в облаке недоступны Debian-зеркала и ghcr.io), вход через браузер с другой машины по адресу ВМ.
+
 ## Примечания
 
 1. **Образ песочницы в облачном прогоне.** Прокси облачного контейнера блокирует `deb.debian.org`, поэтому репозиторный `sandbox-images/webstack/Dockerfile` (Debian bookworm, PostgreSQL 15) собрать в облаке нельзя. Для прогона использована временная копия Dockerfile вне репозитория с отличиями только в базе: `ubuntu:24.04`, `postgresql-16` с символической ссылкой `/usr/lib/postgresql/15 → 16`, удалён штатный пользователь `ubuntu` (uid 1000). Скрипты, конфигурации, флаги безопасности и сценарии — те же. **Проверить на стенде**: `make sandbox-image && make test-integration` с репозиторным Dockerfile.
-2. Реальные LLM-провайдеры в облаке недоступны (нет ключа); все строки, зависящие от качества/времени ответа реальной модели, помечены «проверить на стенде».
+2. Образы backend и frontend в облаке собраны `scripts/dev/cloud-build.sh`; для backend образ `ghcr.io/astral-sh/uv:0.11` подменён локальным с тем же бинарником `uv` 0.11 (ghcr.io заблокирован прокси). Playwright запускался с предустановленным Chromium (`PW_CHROMIUM`).
+3. Реальные LLM-провайдеры в облаке недоступны (нет ключа); все строки, зависящие от качества/времени ответа реальной модели, помечены «проверить на стенде».

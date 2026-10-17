@@ -1,18 +1,15 @@
 # Передача работы в облачную сессию Claude Code
 
-Состояние на 17.10.2026: фазы 0–8 закрыты, фаза 9 частично (сделаны `scripts/loadtest.py`, тесты деградации и детекторов, метка `masso.instance`). Макеты в `docs/mockups/` уже обобщены — плейсхолдеры вместо конкретных данных, рисунки 33–43 ТП ред. 2 обновлены.
+Состояние на 17.10.2026 (вечер): фазы 0–9 закрыты, чекбоксы фазы 9 отмечены. Результаты — `docs/test-report.md` (испытания §12, нагрузка до 50 сессий, ревью безопасности в 4 круга, «чистая ВМ»), правки документов — `docs/doc-updates.md`, отклонения — `docs/DEVIATIONS.md` (32 строки), развёртывание и сценарий защиты — `README.md`.
 
-## Что осталось (фаза 9)
+## Что осталось проверить на стенде (в облаке невозможно)
 
-1. `docs/test-report.md` — таблица «испытание ТЗ 6.3 → тест (файл::функция) → результат → дата» по всем строкам спеки §12. Результаты — из реального прогона `make test` и `make test-integration`, не по памяти.
-2. Нагрузочный прогон `scripts/loadtest.py` на доступном стенде (сколько сессий выдержал, p50/p95 развёртывания, доля ошибок) — в отчёт.
-3. Ревью безопасности агентом `reviewer` по `backend/app/{sandbox,auth,assessment_agent,verification,sessions}`; исправить «Критично» и «Важно».
-4. `/sync-docs` → `docs/doc-updates.md`: каждая строка `docs/DEVIATIONS.md` → готовая формулировка для ТЗ/ТП ред. 2 + список рисунков на перерисовку (монохром, нотация по методичке).
-5. README: развёртывание на чистой Linux-ВМ, демо-аккаунты (пароль `SEED_DEFAULT_PASSWORD`), сценарий демонстрации на защите за 5 минут.
-6. Проверка «чистая ВМ»: `git clone && cp .env.example .env && make up && make seed && make sandbox-image` → вход, DevOps-сценарий от начала до отчёта.
-7. Отметить чекбоксы фазы 9 в `docs/03-plan.md`, коммит `phase-9: …`, push.
+1. Linux-ВМ: `make up` и `make sandbox-image` с репозиторными Dockerfile (облако блокирует deb.debian.org и ghcr.io — здесь образы собирались с подменами, см. ниже).
+2. Реальный LLM: `scripts/llm_smoke.py external|local`, генерация легенды и подсказок, время ответа (ТЗ 4.7: генерация ≤ 120 с), переключение режима при отказе провайдера.
+3. Нагрузка N = 50 на 16 vCPU и с реальным LLM (`scripts/loadtest.py -n 50`, `SANDBOX_MAX_SESSIONS=60`).
+4. Вход через браузер с другой машины; блокировка входа за NAT класса (`LOGIN_MAX_FAILURES_PER_IP`).
 
-Не делать без отдельного решения: всё из раздела «Вторая очередь» плана. Ручная проверка с реальным LLM (`scripts/llm_smoke.py`) — только если в окружении есть ключ; иначе оставить пометку «проверить на стенде».
+Не делать без отдельного решения: всё из раздела «Вторая очередь» плана.
 
 ## Особенности облачного контейнера
 
@@ -27,3 +24,7 @@
 - Dev-БД для тестов: `docker run -d --name masso-devdb -e POSTGRES_USER=masso -e POSTGRES_PASSWORD=masso -e POSTGRES_DB=masso -p 5433:5432 pgvector/pgvector:pg18`; тесты берут `TEST_DATABASE_URL` по умолчанию `…localhost:5433/masso_test`.
 - uv: выполнять с `env -u UV_NATIVE_TLS uv …` (иначе шумное предупреждение).
 - Стек целиком: собрать `masso-backend`, `masso-frontend`, `masso/webstack` через `cloud-build.sh`, затем `docker compose` с override, где у backend/frontend `image:` вместо `build:`.
+- Debian-зеркала заблокированы прокси: образ песочницы собирать временной копией Dockerfile вне репозитория — `FROM ubuntu:24.04`, `postgresql-16` + `ln -s /usr/lib/postgresql/16 /usr/lib/postgresql/15`, `userdel -r ubuntu` перед созданием student (точная sed-подстановка — в истории сессии и test-report, примечание 1); передать третьим аргументом в `cloud-build.sh`.
+- ghcr.io заблокирован: перед сборкой backend собрать локальный образ `ghcr.io/astral-sh/uv:0.11` из `FROM scratch` + `COPY uv /uv` (бинарник `~/.local/bin/uv`).
+- Playwright: `PW_CHROMIUM=/opt/pw-browsers/chromium-1194/chrome-linux*/chrome` (версия пакета ждёт другую сборку Chromium).
+- Тесты, которые идут параллельно (например, у субагента), запускать на отдельной БД (`…/masso_test2`): фикстура пересоздаёт схему и ломает соседний прогон («cache lookup failed for type»).
