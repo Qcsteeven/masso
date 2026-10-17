@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.audit.models import SecurityEvent
 from app.audit.service import record_security
 from app.errors import AppError, ErrorCode
 from app.events.models import EnvironmentEvent
@@ -17,7 +18,7 @@ from app.scenario_agent.graph import secrets_of
 from app.scenarios.spec import ContainerSpec, DocumentSpec
 from app.sessions.detectors import is_prompt_injection
 from app.sessions.models import Hint, LearningSession
-from app.sessions.service import applied_incidents, load_spec, touch
+from app.sessions.service import applied_incidents, load_spec, lock_session, touch
 from app.verification.engine import CheckContext, run_checks
 
 MAX_HINTS = 3
@@ -38,10 +39,18 @@ SYSTEM = (
 )
 
 
+def _leaks_system_prompt(low: str) -> bool:
+    """Any 30-character fragment of the system prompt in the answer means the instructions leaked."""
+    sys_low = SYSTEM.lower()
+    return "assessmentagent" in low or any(sys_low[i : i + 30] in low for i in range(0, len(sys_low) - 30, 5))
+
+
 def hint_is_safe(text: str, spec: ContainerSpec | DocumentSpec) -> bool:
     if _COMMANDY.search(text):
         return False
     low = text.lower()
+    if _leaks_system_prompt(low):
+        return False
     for secret in secrets_of(spec):
         s = secret.strip().lower()
         if len(s) >= 6 and s in low:
@@ -51,6 +60,7 @@ def hint_is_safe(text: str, spec: ContainerSpec | DocumentSpec) -> bool:
 
 async def request_hint(db: AsyncSession, s: LearningSession, question: str) -> dict[str, Any]:
     t0 = time.perf_counter()
+    await lock_session(db, s)  # parallel requests must not bypass the limit of three
     if s.status not in ("active", "paused"):
         raise AppError(ErrorCode.SESSION_NOT_READY, "Подсказки доступны только во время выполнения сценария.")
     _run, spec = await load_spec(db, s)
@@ -63,6 +73,13 @@ async def request_hint(db: AsyncSession, s: LearningSession, question: str) -> d
     number = used + 1
     ladder = spec.hints.ladder[min(number, len(spec.hints.ladder)) - 1]
     question = (question or "").strip()[:500]
+    # reserve the number and release the row lock at once: checks and the LLM call below take seconds and must not
+    # block the worker or the terminal of this session (the unique index keeps the numbering)
+    hint = Hint(
+        session_id=s.id, number=number, question=question, text=ladder, penalty_percent=PENALTY, source="ladder"
+    )
+    db.add(hint)
+    await db.commit()
     text, source = ladder, "ladder"
     from app.events.service import record_event
 
@@ -92,12 +109,32 @@ async def request_hint(db: AsyncSession, s: LearningSession, question: str) -> d
                 .limit(30)
             )
         ).all()
+        recent = [str(c.get("cmd", "")) for c in reversed(cmds)]
+        injected = [c for c in recent if is_prompt_injection(c)]
+        seen = await db.scalar(
+            select(func.count())
+            .select_from(SecurityEvent)
+            .where(
+                SecurityEvent.session_id == s.id,
+                SecurityEvent.kind == "prompt_injection",
+                SecurityEvent.details["cmd"].astext == (injected[-1][:300] if injected else ""),
+            )
+        )
+        if injected and not seen:  # instructions smuggled through the terminal never reach the model
+            record_security(
+                db,
+                kind="prompt_injection",
+                user_id=s.user_id,
+                session_id=s.id,
+                severity="medium",
+                details={"source": "terminal", "cmd": injected[-1][:300]},
+            )
         context = {
             "legend": spec.legend_text or spec.legend.template,
             "hint_number": number,
             "ladder_step": ladder,
             "failed_criteria": failed,
-            "recent_commands": [c.get("cmd", "") for c in reversed(cmds)],
+            "recent_commands": [c for c in recent if c not in injected],
             "student_question": question,
         }
         gw = LLMGateway(db)
@@ -123,8 +160,7 @@ async def request_hint(db: AsyncSession, s: LearningSession, question: str) -> d
         )
         if res is not None:
             text, source = res.value.hint.strip(), "llm"
-    hint = Hint(session_id=s.id, number=number, question=question, text=text, penalty_percent=PENALTY, source=source)
-    db.add(hint)
+    hint.text, hint.source = text, source
     record_event(db, s, "hint", {"number": number, "text": text, "penalty_percent": PENALTY, "source": source})
     await db.commit()
     return {

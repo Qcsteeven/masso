@@ -7,18 +7,20 @@ from decimal import Decimal
 from typing import Any
 
 from pydantic import ValidationError
-from sqlalchemy import delete, or_, select
+from sqlalchemy import delete, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit.service import record_audit
-from app.deps import CurrentUser
+from app.deps import CurrentUser, can_see_group
 from app.errors import AppError, ErrorCode
 from app.llm_gateway.gateway import LLMGateway
+from app.sandbox.service import ensure_capacity
 from app.scenario_agent.graph import ScenarioAgent
 from app.scenarios.models import Assignment, ScenarioRun, ScenarioTemplate, TemplateSkill
 from app.scenarios.schemas import AssignmentIn, AssignmentOut, RunOut, TemplateBrief, TemplateOut
 from app.scenarios.spec import ContainerSpec, DocumentSpec, ScenarioPublic, parse_spec, to_public
 from app.skills.models import Skill
+from app.users.models import User
 
 
 def _validated(t: ScenarioTemplate) -> bool:
@@ -215,6 +217,14 @@ async def generate(db: AsyncSession, user: CurrentUser, template_id: uuid.UUID, 
     t = await get_template(db, template_id)
     if t.status != "published":
         raise AppError(ErrorCode.SCENARIO_NOT_VALID, "Сценарий ещё не опубликован методистом.")
+    if t.kind == "container":
+        # dynamic validation starts a container: one generation at a time per student, within the stand limit
+        got = await db.scalar(text("SELECT pg_try_advisory_xact_lock(hashtext(:k))"), {"k": f"generate:{user.id}"})
+        if not got:
+            raise AppError(
+                ErrorCode.SANDBOX_LIMIT_EXCEEDED, "Вариант сценария уже готовится. Дождитесь завершения генерации."
+            )
+        await ensure_capacity(db)
     t0 = time.perf_counter()
     state = await _agent(db).run(template_id=t.id, template_code=t.code, base=t.spec, user_id=user.id, seed=seed)
     status = state.get("status") or "rejected"
@@ -255,7 +265,11 @@ async def get_run(db: AsyncSession, run_id: uuid.UUID) -> ScenarioRun:
 async def run_public(db: AsyncSession, user: CurrentUser, run_id: uuid.UUID) -> ScenarioPublic | dict[str, Any]:
     run = await get_run(db, run_id)
     spec = parse_spec(run.generated_spec)
-    if user.has("methodist", "admin", "teacher"):
+    staff = user.has("methodist", "admin")
+    if not staff and user.has("teacher") and run.user_id is not None:
+        owner = await db.get(User, run.user_id)
+        staff = owner is not None and can_see_group(user, owner.group_code)
+    if staff:
         return {
             "run_id": str(run.id),
             "status": run.status,

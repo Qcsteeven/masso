@@ -18,6 +18,7 @@ from app.events import bus
 from app.sandbox.manager import STUDENT, get_sandbox
 from app.sessions import service
 from app.sessions.models import LearningSession
+from app.users.models import User
 
 log = logging.getLogger("masso.ws")
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
@@ -124,7 +125,8 @@ async def _authorize_ws(ws: WebSocket, session_id: uuid.UUID) -> LearningSession
         return None
     async with get_sessionmaker()() as db:
         s = await db.get(LearningSession, session_id)
-        if s is None or s.user_id != user_id:
+        owner = await db.get(User, user_id)
+        if s is None or s.user_id != user_id or owner is None or owner.status != "active":
             await ws.close(code=4403, reason="forbidden")
             return None
         return s

@@ -11,7 +11,7 @@ const SEV_TONE: Record<string, Tone> = { low: "grey", medium: "amber", high: "re
 const KIND_LABEL: Record<string, string> = {
   privilege_escalation: "попытка повышения прав", sandbox_escape: "выход за пределы среды", network_scan: "сетевое сканирование",
   prompt_injection: "prompt injection", login_failed: "неудачный вход", refresh_reuse: "повторное использование токена",
-  forbidden_file: "доступ к запрещённому файлу",
+  forbidden_file: "доступ к запрещённому файлу", log_tampering: "подмена журнала команд", sandbox_quota: "превышение квоты диска",
 };
 const Code = ({ children }: { children: React.ReactNode }) => <code className="rounded bg-grey-bg px-1.5 py-0.5 font-mono text-xs">{children}</code>;
 

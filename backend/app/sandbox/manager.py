@@ -6,10 +6,9 @@ Never privileged, never the Docker socket inside, no published ports.
 """
 
 import asyncio
-import io
 import logging
-import tarfile
 import time
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -214,24 +213,48 @@ class SandboxManager:
             "exit_code": st.get("ExitCode"),
         }
 
+    async def srv_volume(self, container_id: str) -> str | None:
+        """Name of the anonymous volume mounted at /srv."""
+        info = await self.inspect(container_id)
+        return next((m.get("Name") for m in info.get("Mounts", []) if m.get("Destination") == "/srv"), None)
+
+    async def volume_sizes_mb(self) -> dict[str, int]:
+        """Volume sizes measured by the Docker daemon (as root): files a student hides with chmod still count."""
+        data = await self.docker._query_json("system/df", params={"type": "volume"}, timeout=20)
+        out: dict[str, int] = {}
+        for v in data.get("Volumes") or []:
+            size = int((v.get("UsageData") or {}).get("Size", -1))
+            if size >= 0:
+                out[str(v.get("Name"))] = size // (1024 * 1024)
+        return out
+
     async def pause(self, container_id: str) -> None:
         await (await self._container(container_id)).pause()
 
     async def unpause(self, container_id: str) -> None:
         await (await self._container(container_id)).unpause()
 
-    async def snapshot(self, container_id: str, dest_dir: str, name: str) -> str:
-        """Copy /srv out of the container into <dest_dir>/<name>.tar (expired sessions)."""
-        container = await self._container(container_id)
-        tar = await container.get_archive("/srv")
-        path = Path(dest_dir) / f"{name}.tar"
+    async def snapshot(self, container_id: str, dest_dir: str, name: str, max_mb: int = 1024) -> str:
+        """Stream /srv out of the container into <dest_dir>/<name>.tar (expired sessions), at most max_mb."""
+        path = Path(dest_dir) / f"{uuid.UUID(name)}.tar"  # the name is a session id, never a path
         path.parent.mkdir(parents=True, exist_ok=True)
-        buf = io.BytesIO()
-        with tarfile.open(fileobj=buf, mode="w") as out:
-            for member in tar.getmembers():
-                f = tar.extractfile(member) if member.isfile() else None
-                out.addfile(member, f)
-        path.write_bytes(buf.getvalue())
+        limit, size = max_mb * 1024 * 1024, 0
+        try:
+            async with self.docker._query(
+                f"containers/{container_id}/archive", method="GET", params={"path": "/srv"}
+            ) as resp:
+                if resp.status != 200:
+                    raise SandboxError(f"Снимок среды не получен: HTTP {resp.status}")
+                with path.open("wb") as out:
+                    async for chunk in resp.content.iter_chunked(1024 * 1024):
+                        size += len(chunk)
+                        if size > limit:
+                            resp.close()  # drop the connection instead of draining the rest of the archive
+                            raise SandboxError(f"Снимок среды больше {max_mb} МБ, не сохранён")
+                        out.write(chunk)
+        except BaseException:
+            path.unlink(missing_ok=True)
+            raise
         return str(path)
 
     async def remove(self, container_id: str) -> None:

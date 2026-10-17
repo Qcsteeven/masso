@@ -13,6 +13,10 @@ from app.sessions.service import check_access, get_session
 router = APIRouter(prefix="/api/events", tags=["events"])
 
 
+def _student_view(user: Any, owner_id: uuid.UUID) -> bool:
+    return bool(not user.has("teacher", "admin") and owner_id == user.id)
+
+
 @router.get("")
 async def events(
     user: Me,
@@ -26,9 +30,11 @@ async def events(
     s = await get_session(db, session_id)
     await check_access(db, user, s)
     types = type
-    if not user.has("teacher", "admin") and s.user_id == user.id:
+    if _student_view(user, s.user_id):
         allowed = set(service.STUDENT_VISIBLE)
         types = [t for t in (type or list(allowed)) if t in allowed]
+        if not types:  # an unknown type must not turn into "no filter"
+            return ok([])
     rows = await service.list_events(
         db, session_id, types=types, severity=severity, date_from=date_from, date_to=date_to
     )
@@ -41,7 +47,8 @@ async def export(
 ) -> Response | dict[str, Any]:
     s = await get_session(db, session_id)
     await check_access(db, user, s)
-    rows = await service.list_events(db, session_id, limit=100_000)
+    types = list(service.STUDENT_VISIBLE) if _student_view(user, s.user_id) else None
+    rows = await service.list_events(db, session_id, types=types, limit=100_000)
     if format == "csv":
         return Response(
             service.to_csv(rows),

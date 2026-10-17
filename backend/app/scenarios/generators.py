@@ -87,11 +87,14 @@ def legal_supply_contract(rng: random.Random) -> Generated:
     total_spec = sum((_d(q) * _d(p) for _, _, q, p in lines), Decimal(0))
     delta = _d(rng.choice([1000, 2500, 4800, 9600]))
     total_contract = total_spec + delta
-    days_spec = rng.choice([10, 15, 20])
-    days_contract = days_spec + rng.choice([5, 10])
-    pen_spec = rng.choice(["0,1", "0,2"])
-    pen_contract = "0,5" if pen_spec == "0,1" else "1"
-    clause_old, clause_new = "4.2", "5.1"
+    # wide value ranges: a finding is accepted only with the variant's own value, so it must not be guessable
+    days_spec = rng.randint(7, 30)
+    days_contract = days_spec + rng.randint(3, 12)
+    pen_steps = rng.sample(range(1, 11), 2)  # 0,05 … 0,5 % in steps of 0,05
+    pen_spec, pen_contract = (f"{min(pen_steps) * 5 / 100:.2f}".replace(".", ","), f"{max(pen_steps) * 5 / 100:.2f}")
+    pen_contract = pen_contract.replace(".", ",")
+    clause_old = "4.2"
+    clause_new = f"{rng.randint(5, 9)}.{rng.randint(1, 9)}"  # random, so the norm finding is variant-specific
     reg = f"Регламент закупок {buyer}"
 
     contract = f"""# Договор поставки № {number}
@@ -174,7 +177,13 @@ def legal_supply_contract(rng: random.Random) -> Generated:
                 type="rule_match",
                 weight=20,
                 critical=k.id == "d_total",
-                params={"defect_type": k.defect_type, "section": k.section},
+                params={
+                    "defect_type": k.defect_type,
+                    "section": k.section,
+                    "must_contain": must[k.id],
+                    # contract value + specification value (+ VAT rate for the sum)
+                    "max_numbers": 3 if k.id == "d_total" else 2,
+                },
             )
         )
         checks.append(
@@ -199,7 +208,13 @@ def legal_supply_contract(rng: random.Random) -> Generated:
             title="Учтено изменение нормативной ссылки",
             type="rule_match",
             weight=14,
-            params={"defect_type": "outdated_norm_reference", "section": "5", "requires_incident": "inc_norm"},
+            params={
+                "defect_type": "outdated_norm_reference",
+                "section": "5",
+                "must_contain": [clause_new],
+                "max_numbers": 2,
+                "requires_incident": "inc_norm",
+            },
         )
     )
     incidents = [

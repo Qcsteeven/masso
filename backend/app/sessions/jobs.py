@@ -52,8 +52,8 @@ async def commands_job(now: datetime) -> None:
         ).all()
         for s in rows:
             try:
-                if await service.collect_commands(db, s):
-                    await db.commit()
+                await service.collect_commands(db, s)
+                await db.commit()  # also when only the offset moved (skipped garbage)
             except Exception:
                 await db.rollback()
                 log.exception("command collection failed for %s", s.id)

@@ -1,12 +1,15 @@
 """Learning sessions: lifecycle, sandbox, document trainer, incidents, idle control (spec §6, §7)."""
 
+import base64
+import binascii
+import json
 import logging
 import random
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit.service import record_security
@@ -78,6 +81,23 @@ async def start_session(db: AsyncSession, user: CurrentUser, run_id: uuid.UUID) 
     if existing is not None:
         return existing
     spec = parse_spec(run.generated_spec)
+    if isinstance(spec, ContainerSpec):
+        # serialize this student's session starts so that parallel requests cannot pass the check together
+        await db.execute(text("SELECT pg_advisory_xact_lock(hashtext(:k))"), {"k": f"session:{user.id}"})
+        busy = await db.scalar(
+            select(func.count())
+            .select_from(LearningSession)
+            .where(
+                LearningSession.user_id == user.id,
+                LearningSession.kind == "container",
+                LearningSession.status.in_(OPEN),
+            )
+        )
+        if busy:  # one training server per student: a single account must not exhaust the stand
+            raise AppError(
+                ErrorCode.SESSION_NOT_READY,
+                "У вас уже есть незавершённая сессия с учебным сервером. Завершите её, чтобы начать новую.",
+            )
     now = now_utc()
     s = LearningSession(
         run_id=run.id,
@@ -187,6 +207,16 @@ async def _events(db: AsyncSession, session_id: uuid.UUID) -> list[EnvironmentEv
     )
 
 
+async def lock_session(db: AsyncSession, s: LearningSession) -> None:
+    """Lock the session row until the caller commits and reload it (concurrent hints/submit see the result)."""
+    await db.execute(
+        select(LearningSession)
+        .where(LearningSession.id == s.id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+
+
 async def touch(db: AsyncSession, s: LearningSession, now: datetime | None = None) -> None:
     """Register activity; resume a paused session."""
     now = now or now_utc()
@@ -239,6 +269,26 @@ async def save_answers(db: AsyncSession, s: LearningSession, answers: dict[str, 
         raise AppError(ErrorCode.VALIDATION_ERROR, "Ответ через форму предусмотрен только в документных сценариях.")
     if s.status not in ("active", "paused"):
         raise AppError(ErrorCode.SESSION_NOT_READY, "Сессия не активна.")
+    if len(json.dumps(answers, ensure_ascii=False)) > MAX_ANSWER_CHARS:
+        raise AppError(ErrorCode.VALIDATION_ERROR, "Ответ слишком большой.", {"max_chars": MAX_ANSWER_CHARS})
+    findings = answers.get("findings", []) if isinstance(answers, dict) else []
+    for f in findings if isinstance(findings, list) else []:
+        if isinstance(f, dict) and any(len(str(v)) > MAX_FIELD_CHARS for v in f.values()):
+            raise AppError(
+                ErrorCode.VALIDATION_ERROR,
+                f"Поле замечания длиннее {MAX_FIELD_CHARS} символов.",
+                {"max_field_chars": MAX_FIELD_CHARS},
+            )
+    _run, spec = await load_spec(db, s)
+    if isinstance(spec, DocumentSpec) and isinstance(findings, list):
+        # listing every section × defect type would pass the rule checks without reading the documents
+        cap = len(spec.answer_key) + sum(1 for i in spec.incidents if i.adds_answer) + EXTRA_FINDINGS
+        if len(findings) > cap:
+            raise AppError(
+                ErrorCode.VALIDATION_ERROR,
+                f"Слишком много замечаний: укажите не более {cap}. Перечислять все варианты подряд нельзя.",
+                {"max_findings": cap},
+            )
     await touch(db, s)
     state = dict(s.documents_state or {})
     state["answers"] = answers
@@ -290,8 +340,17 @@ async def apply_incident(db: AsyncSession, s: LearningSession, now: datetime) ->
     return True
 
 
+EXTRA_FINDINGS = 2  # findings allowed beyond the answer key
+MAX_ANSWER_CHARS = 64_000
+MAX_FIELD_CHARS = 1000
+CMD_LOG = "/tmp/.masso/cmd.log"  # noqa: S108 - path inside the training container
+CMD_CHUNK_BYTES = 32 * 1024  # base64 of it (~44 KB) fits into the exec output limit (64 KB)
+CMD_LINES_PER_TICK = 200
+CMD_FLOOD_BYTES = 1024 * 1024  # an honest session writes far less between two ticks
+
+
 def parse_cmd_log(chunk: str) -> list[tuple[datetime | None, str, str]]:
-    """Lines `epoch<TAB>pwd<TAB>command` from the training server."""
+    """Lines `epoch<TAB>pwd<TAB>command` from the training server (written by the student's shell, so untrusted)."""
     out: list[tuple[datetime | None, str, str]] = []
     for line in chunk.splitlines():
         parts = line.split("\t", 2)
@@ -299,28 +358,79 @@ def parse_cmd_log(chunk: str) -> list[tuple[datetime | None, str, str]]:
             continue
         try:
             ts: datetime | None = datetime.fromtimestamp(int(parts[0]), UTC)
-        except ValueError:
+        except (ValueError, OverflowError, OSError):
             ts = None
         out.append((ts, parts[1][:200], parts[2][:1000]))
     return out
 
 
+def split_cmd_chunk(data: bytes, max_lines: int = CMD_LINES_PER_TICK) -> bytes:
+    """Complete lines only, at most max_lines; the byte length of the result is the offset advance."""
+    end, lines = 0, 0
+    while lines < max_lines:
+        nl = data.find(b"\n", end)
+        if nl < 0:
+            break
+        end, lines = nl + 1, lines + 1
+    if end == 0 and len(data) >= CMD_CHUNK_BYTES:  # a line longer than a chunk: skip this part of it
+        return data
+    return data[:end]
+
+
 async def collect_commands(db: AsyncSession, s: LearningSession) -> int:
-    """Read new lines of /tmp/.masso/cmd.log into the digital footprint; detect suspicious commands."""
+    """Read new lines of the command log into the digital footprint; detect suspicious commands."""
     if not s.sandbox_container_id or s.status != "active":
         return 0
     res = await get_sandbox().exec(
-        s.sandbox_container_id, f"tail -c +{s.cmd_log_offset + 1} /tmp/.masso/cmd.log 2>/dev/null", timeout=10
+        s.sandbox_container_id,
+        # a FIFO or another non-regular file in place of the log must not hang the worker on `tail`
+        f"if [ -e {CMD_LOG} ] && [ ! -f {CMD_LOG} ]; then echo notfile; exit 0; fi; "
+        f"stat -c %s {CMD_LOG} 2>/dev/null || echo 0; "
+        f"timeout 3 tail -c +{max(s.cmd_log_offset, 0) + 1} {CMD_LOG} 2>/dev/null"
+        f" | head -c {CMD_CHUNK_BYTES} | base64 -w0",
+        timeout=10,
     )
-    data = res.output
-    if not data:
+    size_line, _, b64 = res.output.partition("\n")
+    now = now_utc()
+    tampered = size_line.strip() == "notfile"
+    try:
+        size = 0 if tampered else int(size_line.strip() or 0)
+        data = base64.b64decode(b64.strip() or b"")
+    except (ValueError, binascii.Error):
+        log.warning("command log of %s could not be decoded", s.id)
+        s.cmd_log_offset += CMD_CHUNK_BYTES  # never get stuck on the same bytes
         return 0
-    complete = data[: data.rfind("\n") + 1]
-    if not complete:
+    if tampered and s.cmd_log_offset < 0:
+        return 0  # already reported, waiting for a regular log file again
+    if s.cmd_log_offset < 0:
+        s.cmd_log_offset = 0
+    if size - s.cmd_log_offset > CMD_FLOOD_BYTES:
+        # flooded (sparse file, millions of lines): jump to the tail so that new commands are still seen
+        record_security(
+            db, kind="log_tampering", user_id=s.user_id, session_id=s.id, severity="high", details={"flood": size}
+        )
+        msg = "Журнал команд учебной среды переполнен посторонними данными."
+        record_event(db, s, "security", {"kind": "log_tampering", "message": msg}, "critical")
+        s.cmd_log_offset = size - CMD_CHUNK_BYTES
+        return 1
+    if tampered or size < s.cmd_log_offset:  # the log was truncated or replaced from inside the container
+        record_security(
+            db, kind="log_tampering", user_id=s.user_id, session_id=s.id, severity="high", details={"size": size}
+        )
+        msg = "Журнал команд учебной среды был изменён."
+        record_event(db, s, "security", {"kind": "log_tampering", "message": msg}, "critical")
+        s.cmd_log_offset = -1 if tampered else size  # -1: a non-regular file was reported once
+        return 1
+    raw = split_cmd_chunk(data)
+    if not raw:
         return 0
-    s.cmd_log_offset += len(complete.encode("utf-8"))
+    s.cmd_log_offset += len(raw)
+    complete = raw.decode("utf-8", "replace")
+    lo = (s.started_at or now) - timedelta(days=1)
     n = 0
     for ts, cwd, cmd in parse_cmd_log(complete):
+        if ts is not None and not lo <= ts <= now + timedelta(minutes=1):
+            ts = None  # the student's shell writes the timestamps; implausible ones are replaced by now
         n += 1
         record_event(db, s, "command", {"cmd": cmd, "cwd": cwd}, push=False, created_at=ts)
         kind = classify_command(cmd)

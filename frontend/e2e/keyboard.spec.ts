@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { PASSWORD } from "./helpers.ts";
+import { PASSWORD, ensureAssignments } from "./helpers.ts";
 
 // ТП разд. 10: основные действия доступны с клавиатуры.
 test("login and main navigation work from the keyboard", async ({ page }) => {
@@ -22,6 +22,7 @@ test("login and main navigation work from the keyboard", async ({ page }) => {
 });
 
 test("submit confirmation closes with Escape", async ({ page }) => {
+  await ensureAssignments(page); // the test must not depend on other specs having run first
   await page.goto("/login");
   await page.getByLabel("Email").fill("orlova.dp@masso.local");
   await page.getByLabel("Пароль").fill(PASSWORD);

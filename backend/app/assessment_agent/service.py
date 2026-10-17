@@ -12,12 +12,16 @@ from app.errors import AppError, ErrorCode
 from app.events.service import record_event
 from app.sandbox.manager import get_sandbox
 from app.sessions.models import LearningSession
-from app.sessions.service import collect_commands
+from app.sessions.service import collect_commands, lock_session
 
 log = logging.getLogger("masso.assessment")
 
 
-async def submit(db: AsyncSession, s: LearningSession, *, auto: bool = False) -> dict[str, Any]:
+async def submit(
+    db: AsyncSession, s: LearningSession, *, auto: bool = False, message: str | None = None
+) -> dict[str, Any]:
+    # a double click or a manual submit racing the time-limit auto-submit must run the assessment once
+    await lock_session(db, s)
     if s.status not in ("active", "paused"):
         raise AppError(ErrorCode.SESSION_NOT_READY, "Сессия уже завершена или ещё не запущена.")
     t0 = time.perf_counter()
@@ -40,7 +44,8 @@ async def submit(db: AsyncSession, s: LearningSession, *, auto: bool = False) ->
         {
             "status": "checking",
             "auto": auto,
-            "message": "Время вышло, результат отправлен на проверку." if auto else "Результат отправлен на проверку.",
+            "message": message
+            or ("Время вышло, результат отправлен на проверку." if auto else "Результат отправлен на проверку."),
         },
     )
     await db.commit()

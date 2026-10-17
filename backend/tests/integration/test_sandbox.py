@@ -1,10 +1,13 @@
+import asyncio
+import os
 import time
 import uuid
+from pathlib import Path
 
 import aiodocker
 import pytest
 
-from app.sandbox.manager import SandboxManager
+from app.sandbox.manager import SandboxError, SandboxManager
 from tests.integration.conftest import PROFILE
 
 pytestmark = pytest.mark.docker
@@ -70,3 +73,15 @@ async def test_instances_do_not_see_each_other(manager: SandboxManager) -> None:
     finally:
         await other.remove(cid)
         await other.close()
+
+
+async def test_snapshot_streams_to_disk_with_limit(manager: SandboxManager, container: str, tmp_path: Path) -> None:
+    sid = uuid.uuid4().hex
+    path = await manager.snapshot(container, str(tmp_path), sid)
+    assert os.path.basename(path) == f"{uuid.UUID(sid)}.tar" and await asyncio.to_thread(os.path.getsize, path) > 0
+    await manager.exec(container, "head -c 3M /dev/urandom > /srv/app/big.bin")
+    with pytest.raises(SandboxError):
+        await manager.snapshot(container, str(tmp_path), uuid.uuid4().hex, max_mb=1)
+    assert len(os.listdir(tmp_path)) == 1  # the partial file was removed
+    with pytest.raises(ValueError):
+        await manager.snapshot(container, str(tmp_path), "../../etc/x")

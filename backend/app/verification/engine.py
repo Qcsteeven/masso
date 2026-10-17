@@ -74,6 +74,20 @@ def _norm(s: str) -> str:
     return re.sub(r"\s+", " ", s.lower().replace("ё", "е")).strip()
 
 
+_NUMBER = re.compile(r"\d{1,3}(?:[ \u00a0\u202f]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?")
+
+
+def _numbers(text: str) -> set[str]:
+    """Distinct numbers of a text, normalised: `1 234 567,50` → `1234567.50`."""
+    return {re.sub(r"\s", "", t).replace(",", ".") for t in _NUMBER.findall(text)}
+
+
+def _has_number(found: set[str], expected: str) -> bool:
+    exp = re.sub(r"\s", "", expected).replace(",", ".")
+    # an integer expectation (whole roubles) also matches the same number written with kopecks
+    return any(n == exp or ("." not in exp and n.split(".")[0] == exp) for n in found)
+
+
 def _num(v: Any) -> float | None:
     if v is None or v == "":
         return None
@@ -97,7 +111,13 @@ async def _semantic(check: Check, text: str, ctx: CheckContext) -> tuple[bool, s
     must = [_norm(m) for m in check.params.get("must_contain", [])]
     if not text.strip():
         return False, "ответ не заполнен", ""
-    keywords_ok = all(m in _norm(text) for m in must) if must else False
+    nums = _numbers(text)
+    # numeric key values are compared as numbers, and a text listing many numbers does not match
+    keywords_ok = (
+        all((_has_number(nums, m) and len(nums) <= 3) if _NUMBER.fullmatch(m) else m in _norm(text) for m in must)
+        if must
+        else False
+    )
     if ctx.embed is not None and ref:
         vecs, source = await ctx.embed([ref, text])
         if source != "hash":
@@ -163,6 +183,13 @@ async def run_check(check: Check, ctx: CheckContext) -> CheckResult:
     if check.type == "rule_match":
         if "defect_type" in p:
             f = _find(a, str(p["defect_type"]), p.get("section"))
+            must = [str(m) for m in p.get("must_contain", [])]
+            if f is not None and must:
+                # the finding must name the variant's concrete value (one memorised answer must not fit every
+                # variant) and must not list many numbers at once (enumerating candidates is not an answer)
+                limit = int(p.get("max_numbers", 3))
+                nums = _numbers(f"{f.get('comment', '')} {f.get('proposed_text', '')}")  # both fields together
+                f = f if len(nums) <= limit and all(_has_number(nums, m) for m in must) else None
             res.passed, res.detail = f is not None, "найдено" if f else "не найдено"
         else:
             got = str(a.get(str(p["field"]), ""))
@@ -181,7 +208,7 @@ async def run_check(check: Check, ctx: CheckContext) -> CheckResult:
         res.detail = "значение верно" if res.passed else "значение не совпадает"
     elif check.type == "semantic_similarity":
         if "defect_type" in p:
-            f = _find(a, str(p["defect_type"]), None)
+            f = _find(a, str(p["defect_type"]), p.get("section"))
             text = str(f.get("proposed_text", "")) if f else ""
         else:
             text = str(a.get(str(p.get("field", "")), ""))

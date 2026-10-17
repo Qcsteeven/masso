@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import ForeignKey, String, Text
+from sqlalchemy import ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -32,6 +32,7 @@ class LearningSession(UUIDPk, CreatedAt, Base):
 
 class Hint(UUIDPk, CreatedAt, Base):
     __tablename__ = "hints"
+    __table_args__ = (UniqueConstraint("session_id", "number", name="uq_hints_session_number"),)
     session_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("sessions.id", ondelete="CASCADE"), index=True)
     number: Mapped[int]
     question: Mapped[str] = mapped_column(Text, default="")

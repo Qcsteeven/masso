@@ -27,6 +27,8 @@ async def load_profile(db: AsyncSession, code: str) -> Profile:
 
 
 async def ensure_capacity(db: AsyncSession) -> None:
+    """Session containers (from the DB) plus running validation containers must stay under the limit."""
+    from app.sandbox.manager import LABEL_KIND, get_sandbox
     from app.sessions.models import LearningSession
 
     n = await db.scalar(
@@ -34,7 +36,11 @@ async def ensure_capacity(db: AsyncSession) -> None:
         .select_from(LearningSession)
         .where(LearningSession.kind == "container", LearningSession.status.in_(ACTIVE_STATUSES))
     )
-    if (n or 0) >= get_settings().sandbox_max_sessions:
+    try:
+        validating = len(await get_sandbox().list_by_label(f"{LABEL_KIND}=validation"))
+    except Exception:  # Docker unavailable: the session start itself will report it
+        validating = 0
+    if (n or 0) + validating >= get_settings().sandbox_max_sessions:
         raise AppError(
             ErrorCode.SANDBOX_LIMIT_EXCEEDED,
             "Все учебные среды заняты. Попробуйте запустить сценарий через несколько минут.",

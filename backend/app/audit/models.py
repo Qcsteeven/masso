@@ -1,7 +1,7 @@
 import uuid
 from typing import Any
 
-from sqlalchemy import ForeignKey, String, Text
+from sqlalchemy import ForeignKey, Index, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -22,6 +22,7 @@ class AuditLog(UUIDPk, CreatedAt, Base):
 
 class SecurityEvent(UUIDPk, CreatedAt, Base):
     __tablename__ = "security_events"
+    __table_args__ = (Index("ix_security_events_kind_created", "kind", "created_at"),)  # login throttling, journal
     user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True)
     session_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("sessions.id", ondelete="SET NULL"), index=True)
     kind: Mapped[str] = mapped_column(String(64))

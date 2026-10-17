@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager, suppress
 from typing import Any
 
 from fastapi import FastAPI
+from fastapi.openapi.utils import get_openapi
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import text
 
@@ -14,6 +15,7 @@ from app import health
 from app.auth.router import router as auth_router
 from app.config import get_settings
 from app.db import get_engine
+from app.deps import AdminUser
 from app.errors import RequestIdMiddleware, install_error_handlers, ok
 from app.logging_setup import setup_logging
 from app.users.router import router as users_router
@@ -40,12 +42,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 def create_app() -> FastAPI:
     settings = get_settings()
     setup_logging()
+    prod = settings.app_env == "prod"
+    if settings.jwt_secret_generated:
+        log.warning("JWT_SECRET is missing or a sample value: a random secret is used until restart; set it in .env")
     app = FastAPI(
         title="МАССО API",
         version="0.1.0",
         lifespan=lifespan,
-        docs_url="/api/docs",
-        openapi_url="/api/openapi.json",
+        # spec §10: in prod the API schema is for administrators only (GET /api/admin/openapi.json)
+        docs_url=None if prod else "/api/docs",
+        openapi_url=None if prod else "/api/openapi.json",
         redoc_url=None,
     )
     app.add_middleware(RequestIdMiddleware)
@@ -70,6 +76,10 @@ def create_app() -> FastAPI:
 
     for router in (auth_router, users_router, *_optional_routers()):
         app.include_router(router)
+
+    @app.get("/api/admin/openapi.json", include_in_schema=False)
+    async def admin_openapi(_admin: AdminUser) -> dict[str, Any]:
+        return ok(get_openapi(title=app.title, version=app.version, routes=app.routes))
 
     Instrumentator(excluded_handlers=["/metrics", "/api/health"]).instrument(app).expose(
         app, endpoint="/metrics", include_in_schema=False

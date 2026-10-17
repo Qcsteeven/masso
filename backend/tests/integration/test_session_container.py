@@ -5,7 +5,7 @@ from datetime import timedelta
 import pytest
 import websockets
 from httpx import AsyncClient
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit.models import SecurityEvent
@@ -97,3 +97,84 @@ async def test_foreign_student_cannot_open_terminal(
             await ws.recv()
     await jobs.reaper_job(now_utc())  # active session: container kept
     assert await real_sandbox.list_by_label(f"masso.session={s['id']}")
+
+
+async def test_one_training_server_per_student(
+    client: AsyncClient, seeded: None, as_student: dict[str, str], real_sandbox: SandboxManager
+) -> None:
+    items = (await client.get("/api/scenarios/templates", headers=as_student)).json()["data"]
+    tid = next(t["id"] for t in items if t["code"] == "devops.web_recovery")
+    # parallel generations of one student: the second one is refused while the first validates
+    gens = await asyncio.gather(
+        *(client.post("/api/scenarios/generate", headers=as_student, json={"template_id": tid}) for _ in range(2))
+    )
+    codes = sorted(r.status_code for r in gens)
+    assert codes == [201, 503], [r.text for r in gens]
+    run = next(r for r in gens if r.status_code == 201).json()["data"]
+    first = await client.post("/api/sessions", headers=as_student, json={"run_id": run["run_id"]})
+    assert first.status_code == 201
+    run2 = (await client.post("/api/scenarios/generate", headers=as_student, json={"template_id": tid})).json()["data"]
+    second = await client.post("/api/sessions", headers=as_student, json={"run_id": run2["run_id"]})
+    assert second.status_code == 409 and second.json()["error"]["code"] == "SESSION_NOT_READY"
+
+
+async def test_disk_quota_ends_session_and_log_tampering_recorded(
+    client: AsyncClient, seeded: None, as_student: dict[str, str], db: AsyncSession, real_sandbox: SandboxManager
+) -> None:
+    from app.assessment_agent import jobs as a_jobs
+    from app.audit.models import SecurityEvent
+    from app.sandbox.models import SandboxProfile
+
+    s = await _session(client, as_student)
+    row = await db.get(LearningSession, s["id"])
+    await db.refresh(row)
+    cid = row.sandbox_container_id
+    await real_sandbox.exec(cid, "echo '1700000000\t/srv\tls' >> /tmp/.masso/cmd.log")
+    await jobs.commands_job(now_utc())
+    await real_sandbox.exec(cid, ": > /tmp/.masso/cmd.log")  # the student wipes the trail
+    await jobs.commands_job(now_utc())
+    kinds = set((await db.scalars(select(SecurityEvent.kind).where(SecurityEvent.session_id == row.id))).all())
+    assert "log_tampering" in kinds
+    # a 60 KB line without a newline must not stall the collection: the next command is still recorded
+    await real_sandbox.exec(cid, "head -c 60000 /dev/zero | tr '\\0' x >> /tmp/.masso/cmd.log")
+    await real_sandbox.exec(cid, "printf '1700000000\\t/srv\\tnmap -sS 10.0.0.0/24\\n' >> /tmp/.masso/cmd.log")
+    for _ in range(4):
+        await jobs.commands_job(now_utc())
+    kinds = set((await db.scalars(select(SecurityEvent.kind).where(SecurityEvent.session_id == row.id))).all())
+    assert "network_scan" in kinds
+    # a FIFO in place of the log must neither hang the worker nor be reported on every tick
+    await real_sandbox.exec(cid, "rm -f /tmp/.masso/cmd.log && mkfifo /tmp/.masso/cmd.log")
+    t0 = asyncio.get_running_loop().time()
+    for _ in range(3):
+        await jobs.commands_job(now_utc())
+    assert asyncio.get_running_loop().time() - t0 < 10
+    n = await db.scalar(
+        select(func.count())
+        .select_from(SecurityEvent)
+        .where(SecurityEvent.session_id == row.id, SecurityEvent.kind == "log_tampering")
+    )
+    assert n == 2  # the truncation above and the FIFO once
+    await real_sandbox.exec(cid, "rm -f /tmp/.masso/cmd.log")
+    # a flooded log (sparse 5 MB) is skipped to its tail: the command written after it is still seen
+    await real_sandbox.exec(
+        cid, "truncate -s 5M /tmp/.masso/cmd.log && printf '1700000000\\t/srv\\tsudo -i\\n' >> /tmp/.masso/cmd.log"
+    )
+    for _ in range(3):
+        await jobs.commands_job(now_utc())
+    kinds = set((await db.scalars(select(SecurityEvent.kind).where(SecurityEvent.session_id == row.id))).all())
+    assert "privilege_escalation" in kinds
+    # the student fills /srv beyond the profile quota: the worker ends the session and removes the server
+    prof = await db.get(SandboxProfile, "small")
+    prof.storage_mb = 60
+    await db.commit()
+    # hidden from the student's own `du` by chmod 000: the daemon still sees it
+    await real_sandbox.exec(
+        cid, "mkdir /srv/h && head -c 80M /dev/zero > /srv/h/fill.bin && chmod 000 /srv/h", timeout=60
+    )
+    a_jobs._last_quota = None
+    await a_jobs.quota_job(now_utc())
+    await db.refresh(row)
+    assert row.status == "completed"
+    kinds = set((await db.scalars(select(SecurityEvent.kind).where(SecurityEvent.session_id == row.id))).all())
+    assert "sandbox_quota" in kinds
+    assert not await real_sandbox.list_by_label(f"masso.session={s['id']}")
