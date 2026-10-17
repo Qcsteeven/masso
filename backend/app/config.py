@@ -13,6 +13,9 @@ class Settings(BaseSettings):
 
     app_env: Literal["dev", "test", "prod"] = "dev"
     database_url: str = "postgresql+asyncpg://masso:masso@localhost:5433/masso"
+    # a scenario generation holds its connection through dynamic validation: size the pool for concurrent sessions
+    db_pool_size: int = 20
+    db_max_overflow: int = 40
 
     jwt_secret: str = "dev-secret-change-me-dev-secret-change-me"  # noqa: S105
     access_token_ttl_min: int = 15

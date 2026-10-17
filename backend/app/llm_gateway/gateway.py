@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import re
+import time
 import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
@@ -15,11 +16,12 @@ from datetime import UTC, datetime
 from typing import Any
 
 from pydantic import BaseModel, ValidationError
-from sqlalchemy import select
+from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit.models import AgentLog
 from app.config import get_settings
+from app.db import get_sessionmaker
 from app.llm_gateway.models import LLMProvider, LLMSettings
 from app.llm_gateway.providers import OpenAICompatProvider, Provider, ProviderError, fit_dim, hash_embedding
 
@@ -70,6 +72,35 @@ def _extract_json(text: str) -> Any:
     if start > 0:
         text = text[start:]
     return json.loads(text)
+
+
+MARK_INTERVAL_SEC = 30.0
+_last_marked: dict[str, float] = {}
+
+
+async def _mark_failed(row: LLMProvider, exc: Exception) -> None:
+    """Store the provider error in its own short transaction.
+
+    Updating the row inside the caller's transaction would lock it until that transaction ends; generation keeps
+    its transaction open through dynamic validation, so while a provider is down every concurrent generation
+    waited for the previous one (found by the load test). Written at most once per MARK_INTERVAL_SEC per provider
+    so that a burst of failing requests does not take a second pool connection each.
+    """
+    now = time.monotonic()
+    if now - _last_marked.get(row.code, -MARK_INTERVAL_SEC) < MARK_INTERVAL_SEC:
+        return
+    _last_marked[row.code] = now
+    try:
+        async with get_sessionmaker()() as s:
+            await s.execute(text("SET LOCAL lock_timeout = '2s'"))
+            await s.execute(
+                update(LLMProvider)
+                .where(LLMProvider.id == row.id)
+                .values(last_error=str(exc)[:500], last_error_at=datetime.now(UTC))
+            )
+            await s.commit()
+    except Exception:  # the status field is informational; never fail the request because of it
+        log.warning("could not store provider error", extra={"extra": {"provider": row.code}})
 
 
 class LLMGateway:
@@ -154,7 +185,7 @@ class LLMGateway:
                 try:
                     res = await provider.chat(msgs, json_mode=True, temperature=temperature, max_tokens=max_tokens)
                 except ProviderError as exc:
-                    row.last_error, row.last_error_at = str(exc)[:500], datetime.now(UTC)
+                    await _mark_failed(row, exc)
                     self._log(
                         agent=agent,
                         task=task,
@@ -242,5 +273,5 @@ class LLMGateway:
                 vecs = await provider.embed(texts)
                 return EmbedResult([fit_dim(v, dim) for v in vecs], row.code)
             except ProviderError as exc:
-                row.last_error, row.last_error_at = str(exc)[:500], datetime.now(UTC)
+                await _mark_failed(row, exc)
         return EmbedResult([hash_embedding(t, dim) for t in texts], "hash")

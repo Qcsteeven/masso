@@ -1,13 +1,15 @@
 import pytest
 from httpx import AsyncClient
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit.models import AgentLog, AuditLog
+from app.db import get_sessionmaker
+from app.llm_gateway import gateway
 from app.llm_gateway.fake import FakeFactory, FakeProvider
 from app.llm_gateway.gateway import LLMGateway
-from app.llm_gateway.models import LLMSettings
+from app.llm_gateway.models import LLMProvider, LLMSettings
 
 pytestmark = pytest.mark.db
 
@@ -39,6 +41,22 @@ async def test_all_down_returns_none_template(db: AsyncSession) -> None:
     await _mode(db, "external")
     gw = LLMGateway(db, FakeFactory())  # every provider fails
     assert await gw.complete_json("legend", [{"role": "user", "content": "x"}], Legend) is None
+
+
+async def test_provider_error_does_not_lock_row(db: AsyncSession) -> None:
+    """Load test finding: a provider error must not hold the provider row locked for the caller's transaction."""
+    await _mode(db, "external")
+    gateway._last_marked.clear()
+    gw = LLMGateway(db, FakeFactory())
+    assert await gw.complete_json("legend", [{"role": "user", "content": "x"}], Legend) is None
+    # the caller's transaction is still open; another request must be able to update the row at once
+    async with get_sessionmaker()() as other:
+        await other.execute(text("SET LOCAL lock_timeout = '1s'"))
+        await other.execute(update(LLMProvider).where(LLMProvider.code == "external").values(priority=5))
+        await other.commit()
+        row = await other.scalar(select(LLMProvider).where(LLMProvider.code == "external"))
+        assert row is not None and row.last_error and row.last_error_at
+    await db.commit()
 
 
 async def test_template_mode_skips_providers(db: AsyncSession) -> None:
