@@ -253,9 +253,9 @@ export interface SkillGraph {
 }
 export const SKILL_STATUS_LABEL: Record<SkillStatus, string> = { draft: "черновик", active: "активен", deprecated: "устаревший", archived: "в архиве" };
 
-export interface ValidationStep { step: string; ok: boolean; detail: string; duration_ms: number }
+export interface ValidationStep { step: string; ok: boolean; detail: string; duration_ms?: number } // absent in seed reports
 export interface TemplateFull extends TemplateBrief {
   spec: Record<string, unknown>;
-  validation_report: { status: string; version: number; steps: ValidationStep[]; errors: string[]; generation_mode: string; duration_ms: number; validated_at: string } | null;
+  validation_report: { status: string; version: number; steps: ValidationStep[]; errors: string[]; generation_mode: string; duration_ms?: number; validated_at: string } | null;
   created_at: string;
 }

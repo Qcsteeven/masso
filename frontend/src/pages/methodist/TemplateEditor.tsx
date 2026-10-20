@@ -181,7 +181,7 @@ export default function TemplateEditor() {
           </div>
           <Card className="flex flex-col gap-3">
             <CardTitle aside={rep && <Chip tone={rep.status === "published" ? (repCurrent ? "green" : "amber") : "red"}>
-              {rep.status === "published" ? (repCurrent ? `пройдена · ${Math.round(rep.duration_ms / 1000)} с` : `устарела (v${rep.version})`) : "не пройдена"}
+              {rep.status === "published" ? (repCurrent ? (rep.duration_ms == null ? "пройдена" : `пройдена · ${Math.round(rep.duration_ms / 1000)} с`) : `устарела (v${rep.version})`) : "не пройдена"}
             </Chip>}>Отчёт валидации</CardTitle>
             {!rep ? <p className="m-0 text-sm text-muted">Валидация ещё не выполнялась. Публикация доступна только после успешного прогона текущей версии.</p> : (
               <ol className="m-0 flex list-none flex-col p-0">
@@ -189,7 +189,7 @@ export default function TemplateEditor() {
                   <li key={i} className="flex gap-3 border-b border-line-soft py-2.5 text-sm last:border-0">
                     <Icon name={s.ok ? "check" : "x"} size={18} className={cx("mt-0.5 shrink-0", s.ok ? "text-green" : "text-red-ink")} />
                     <div className="min-w-0 flex-1"><div>{stepLabel(s.step)}</div><div className="text-xs text-muted">{s.detail}</div></div>
-                    <span className="font-mono text-xs text-muted">{(s.duration_ms / 1000).toFixed(1).replace(".", ",")} с</span>
+                    {s.duration_ms != null && <span className="font-mono text-xs text-muted">{(s.duration_ms / 1000).toFixed(1).replace(".", ",")} с</span>}
                   </li>
                 ))}
               </ol>
