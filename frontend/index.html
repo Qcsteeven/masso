@@ -8,6 +8,13 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // GitHub Pages demo: 404.html saved a deep link before redirecting here; restore it before the router starts.
+      try {
+        var p = sessionStorage.getItem("masso-demo-path");
+        if (p) { sessionStorage.removeItem("masso-demo-path"); history.replaceState(null, "", p); }
+      } catch (e) {}
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

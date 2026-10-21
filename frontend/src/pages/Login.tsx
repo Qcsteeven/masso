@@ -5,6 +5,15 @@ import { homeFor, useAuth } from "../auth/AuthContext";
 import { Icon, Logo } from "../components/icons";
 import { Banner, Button, FieldRow, Input } from "../components/ui";
 
+const DEMO = import.meta.env.VITE_DEMO === "true";
+const DEMO_ROLES = [
+  { email: "student1@masso.local", label: "Обучающийся" },
+  { email: "teacher@masso.local", label: "Преподаватель" },
+  { email: "methodist@masso.local", label: "Методист" },
+  { email: "admin@masso.local", label: "Администратор" },
+  { email: "ops@masso.local", label: "Сисадмин" },
+];
+
 export default function Login() {
   const { user, login } = useAuth();
   const navigate = useNavigate();
@@ -70,6 +79,17 @@ export default function Login() {
           <div className="flex items-center gap-2.5 text-[13px] text-muted">
             <Icon name="shield" size={16} /> Пароль проверяется на сервере; сессия хранится в защищённой cookie.
           </div>
+          {DEMO && (
+            <div className="flex flex-col gap-2 border-t border-line pt-4">
+              <div className="text-sm font-semibold">Демо-версия: войти как</div>
+              <div className="flex flex-wrap gap-2">
+                {DEMO_ROLES.map((a) => (
+                  <Button key={a.email} small type="button" onClick={() => { setEmail(a.email); setPassword("masso-demo"); }}>{a.label}</Button>
+                ))}
+              </div>
+              <p className="m-0 text-[13px] text-muted">Кнопка заполняет email и пароль <code>masso-demo</code>, затем нажмите «Войти».</p>
+            </div>
+          )}
         </form>
       </section>
     </div>

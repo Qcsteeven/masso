@@ -27,3 +27,6 @@ test-results/
 .claude/settings.local.json
 CLAUDE.local.md
 .claude/agent-memory-local/
+
+# GitHub Pages demo build (made in CI)
+site/demo/

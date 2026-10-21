@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:demo": "tsc -b && vite build --mode demo --base /masso/demo/ --outDir ../site/demo --emptyOutDir",
     "preview": "vite preview",
     "lint": "oxlint src e2e",
     "typecheck": "tsc -b",

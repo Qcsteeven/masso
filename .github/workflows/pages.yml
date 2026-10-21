@@ -1,11 +1,12 @@
-# Showcase site (site/) on GitHub Pages: https://qcsteeven.github.io/masso/
+# Showcase site (site/) and the interactive demo (frontend in demo mode, site/demo/) on GitHub Pages:
+# https://qcsteeven.github.io/masso/ and https://qcsteeven.github.io/masso/demo/
 # One-time setup: repository Settings -> Pages -> Build and deployment -> Source: GitHub Actions.
 name: pages
 
 on:
   push:
     branches: [main]
-    paths: ["site/**", ".github/workflows/pages.yml"]
+    paths: ["site/**", "frontend/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -25,6 +26,17 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Build the demo (backend imitated in the browser)
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile && pnpm build:demo
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

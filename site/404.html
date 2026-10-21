@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>МАССО</title>
+<script>
+  // GitHub Pages serves this page for every unknown path. Deep links of the demo SPA are sent to its index,
+  // which restores the path (see frontend/index.html); everything else goes to the project page.
+  var p = location.pathname;
+  if (p.indexOf("/masso/demo/") === 0) {
+    try { sessionStorage.setItem("masso-demo-path", p + location.search + location.hash); } catch (e) {}
+    location.replace("/masso/demo/");
+  } else {
+    location.replace("/masso/");
+  }
+</script>
+</head>
+<body></body>
+</html>

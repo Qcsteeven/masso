@@ -16,12 +16,21 @@ const queryClient = new QueryClient({
   },
 });
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </QueryClientProvider>
-  </StrictMode>,
-);
+function render() {
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </QueryClientProvider>
+    </StrictMode>,
+  );
+}
+
+// GitHub Pages demo build (VITE_DEMO=true): the backend is imitated in the browser, see src/demo/backend.ts.
+if (import.meta.env.VITE_DEMO === "true") {
+  import("./demo/backend").then((m) => { m.install(); render(); });
+} else {
+  render();
+}
