@@ -23,7 +23,7 @@
 
 ## Архитектура (кратко, детали — спека §1)
 - Модульный монолит FastAPI: пакеты `backend/app/<компонент>/` = компоненты C4 из ТП. Межмодульные вызовы — через сервисные классы, не HTTP.
-- Хранилище одно: PostgreSQL + pgvector. **Не добавляй Neo4j, ChromaDB, Redis** — исключены из системы совсем (Д-36); Celery и Kubernetes — вторая очередь.
+- Хранилище одно: PostgreSQL + pgvector. **Не добавляй Neo4j, ChromaDB, Redis, Kubernetes, Prometheus/Grafana** — исключены из системы совсем (Д-36, Д-37); Celery тоже не нужен.
 - Фоновые задачи — один asyncio-worker (`app/worker.py`), состояние только в БД.
 - LLM — только через `app/llm_gateway` (OpenAI-совместимый клиент, fallback external → local → template). В тестах — `FakeLLM`, реальные вызовы в unit-тестах запрещены.
 - LangGraph — только для графов ScenarioAgent и AssessmentAgent (спека §9).
