@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from "react-router";
 import { ApiError } from "../api/client";
 import { homeFor, useAuth } from "../auth/AuthContext";
 import { Icon, Logo } from "../components/icons";
+import { ThemeToggle } from "../components/Layout";
 import { Banner, Button, FieldRow, Input } from "../components/ui";
 
 const DEMO = import.meta.env.VITE_DEMO === "true";
@@ -39,20 +40,21 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen flex-wrap">
-      <section className="flex flex-[1_1_520px] flex-col justify-between gap-10 bg-nav px-16 py-14 text-[#e7edf3] max-md:px-6">
+    <div className="relative flex min-h-screen flex-wrap">
+      <div className="absolute right-6 top-6"><ThemeToggle /></div>
+      <section className="flex flex-[1_1_520px] flex-col justify-between gap-10 px-16 py-14 max-md:px-6">
         <div className="flex items-center gap-3.5">
           <Logo size={44} />
           <div>
-            <div className="text-[22px] font-bold tracking-[0.06em]">МАССО</div>
-            <div className="text-[13px] text-[#9fb0c1]">учебная диспетчерская</div>
+            <div className="text-[22px] font-semibold tracking-[0.04em]">МАССО</div>
+            <div className="text-[13px] text-muted">учебная диспетчерская</div>
           </div>
         </div>
         <div className="flex max-w-[560px] flex-col gap-5">
-          <h1 className="m-0 text-[40px] font-semibold leading-tight max-md:text-3xl">
-            Сценарий — как назначение. Среда — как рабочее место. Отчёт — как протокол.
+          <h1 className="m-0 text-[44px] font-semibold leading-[1.12] tracking-tight max-md:text-3xl">
+            Сценарий — как назначение. Среда — как <span className="text-accent">рабочее место</span>. Отчёт — как протокол.
           </h1>
-          <p className="m-0 text-base leading-relaxed text-[#b7c4d1]">
+          <p className="m-0 text-base leading-relaxed text-muted">
             Мультиагентная система ситуативного обучения: индивидуальные кейсы под профиль компетенций, изолированная
             учебная среда, динамические инциденты и автоматическая проверка результата.
           </p>
@@ -61,9 +63,9 @@ export default function Login() {
       </section>
       <section className="flex min-w-0 flex-[999_1_560px] items-center justify-center px-6 py-12">
         <form onSubmit={submit} aria-labelledby="login-title"
-          className="flex w-full max-w-[480px] flex-col gap-5 rounded-xl border border-line bg-surface p-10 max-sm:p-6">
+          className="flex w-full max-w-[480px] flex-col gap-5 rounded-[28px] border border-line/70 bg-surface p-10 shadow-card max-sm:p-6">
           <div className="flex flex-col gap-1.5">
-            <h2 id="login-title" className="m-0 text-[26px] font-semibold">Вход в систему</h2>
+            <h2 id="login-title" className="m-0 text-[26px] font-semibold tracking-tight">Вход в систему</h2>
             <p className="m-0 text-sm text-muted">Используйте учётную запись, выданную образовательной организацией.</p>
           </div>
           {error && <Banner tone="red" icon="alert" role="alert">{error}</Banner>}

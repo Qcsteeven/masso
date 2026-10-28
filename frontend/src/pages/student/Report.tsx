@@ -11,11 +11,11 @@ function ScoreRing({ value, passed }: { value: number; passed: boolean }) {
   const c = 2 * Math.PI * r;
   return (
     <svg width="132" height="132" viewBox="0 0 132 132" role="img" aria-label={`Итоговый балл ${value} из 100`}>
-      <circle cx="66" cy="66" r={r} fill="none" stroke="#e6eaee" strokeWidth="12" />
-      <circle cx="66" cy="66" r={r} fill="none" stroke={passed ? "#1d5fd1" : "#b3261e"} strokeWidth="12" strokeLinecap="round"
+      <circle cx="66" cy="66" r={r} fill="none" stroke="var(--color-sunken)" strokeWidth="12" />
+      <circle cx="66" cy="66" r={r} fill="none" stroke={passed ? "var(--color-green)" : "var(--color-red)"} strokeWidth="12" strokeLinecap="round"
         strokeDasharray={`${(c * value) / 100} ${c}`} transform="rotate(-90 66 66)" />
-      <text x="66" y="68" textAnchor="middle" fontSize="34" fontWeight="600" fill="#14212e">{value}</text>
-      <text x="66" y="90" textAnchor="middle" fontSize="12" fill="#556270">из 100</text>
+      <text x="66" y="68" textAnchor="middle" fontSize="34" fontWeight="600" fill="var(--color-ink)">{value}</text>
+      <text x="66" y="90" textAnchor="middle" fontSize="12" fill="var(--color-muted)">из 100</text>
     </svg>
   );
 }

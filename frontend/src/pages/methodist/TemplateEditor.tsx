@@ -195,7 +195,7 @@ export default function TemplateEditor() {
               </ol>
             )}
             {rep?.errors?.length ? <Banner tone="red" icon="alert">{rep.errors.join("; ")}</Banner> : null}
-            <pre className="m-0 overflow-auto rounded-lg bg-term p-4 font-mono text-xs leading-relaxed text-[#d7e0e8]">{JSON.stringify({
+            <pre className="m-0 overflow-auto rounded-2xl bg-term p-4 font-mono text-xs leading-relaxed text-term-ink">{JSON.stringify({
               engine: spec.kind, ...(container ? { profile: spec.profile, faults: Object.keys(spec.faults.catalog) } : { builder: spec.builder }),
               checks: spec.checks.length, incidents: (spec.incidents ?? []).length, hints_max: spec.hints.policy === "none" ? 0 : 3, threshold: spec.success?.threshold ?? 75,
             }, null, 2)}</pre>

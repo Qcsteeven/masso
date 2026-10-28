@@ -6,44 +6,87 @@
 @import "@fontsource/ibm-plex-mono/400.css";
 @import "@fontsource/ibm-plex-mono/500.css";
 
-/* Tokens from docs/mockups/README.md (Claude Design) */
+/* Style «мягкий современный» (variant C, 28.10.2026): warm light theme; dark theme below redefines the same tokens.
+   Layout and component structure follow docs/mockups (Claude Design), DEVIATIONS Д-38. */
 @theme {
   --font-sans: "IBM Plex Sans", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
-  --color-bg: #eef1f4;
+  --color-bg: #faf7f2;
   --color-surface: #ffffff;
-  --color-line: #d5dce3;
-  --color-line-soft: #e6eaee;
-  --color-field: #b9c3cd;
-  --color-ink: #14212e;
-  --color-muted: #556270;
-  --color-label: #3b4856;
-  --color-nav: #12202c;
-  --color-nav-hover: #1a2e40;
-  --color-nav-ink: #c3cfdb;
-  --color-nav-label: #7f93a6;
-  --color-accent: #1d5fd1;
-  --color-accent-dark: #123f8f;
-  --color-blue-bg: #e6eefb;
-  --color-blue-ink: #1747a6;
-  --color-green-bg: #e3f3ea;
-  --color-green-ink: #135c34;
-  --color-green: #17703f;
-  --color-amber-bg: #fff3d1;
-  --color-amber-ink: #7a4f00;
-  --color-amber: #b7791f;
-  --color-red-bg: #fce8e6;
-  --color-red-ink: #8c1d18;
-  --color-red: #b3261e;
-  --color-grey-bg: #edf0f3;
-  --color-grey-ink: #3b4856;
-  --color-term: #0f1a24;
-  --color-term-bar: #182b3b;
-  --radius-card: 10px;
+  --color-sunken: #f5f0e8;
+  --color-line: #ece6dc;
+  --color-line-soft: #f3eee6;
+  --color-field: #ddd5c8;
+  --color-ink: #1c1917;
+  --color-muted: #78716c;
+  --color-label: #57534e;
+  --color-nav: #1c1917;
+  --color-nav-hover: #f5f0e8;
+  --color-nav-ink: #57534e;
+  --color-nav-label: #a8a29e;
+  --color-on-nav: #faf7f2;
+  --color-accent: #ea580c;
+  --color-accent-dark: #c2410c;
+  --color-on-accent: #ffffff;
+  --color-blue-bg: #e8effc;
+  --color-blue-ink: #1d4ed8;
+  --color-green-bg: #e6f4ea;
+  --color-green-ink: #166534;
+  --color-green: #16a34a;
+  --color-amber-bg: #ffedd5;
+  --color-amber-ink: #9a3412;
+  --color-amber: #ea8a0c;
+  --color-red-bg: #fde8e6;
+  --color-red-ink: #b42318;
+  --color-red: #dc2626;
+  --color-grey-bg: #f5f0e8;
+  --color-grey-ink: #57534e;
+  --color-term: #1c1917;
+  --color-term-bar: #292524;
+  --color-term-ink: #e7e5e4;
+  --radius-card: 20px;
+  --shadow-card: 0 1px 2px rgb(28 25 23 / 0.04), 0 6px 24px rgb(28 25 23 / 0.05);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #141210;
+  --color-surface: #1e1b18;
+  --color-sunken: #262220;
+  --color-line: #2f2a26;
+  --color-line-soft: #282421;
+  --color-field: #443d37;
+  --color-ink: #f5f2ed;
+  --color-muted: #a8a29e;
+  --color-label: #d6d3d1;
+  --color-nav: #f5f2ed;
+  --color-nav-hover: #262220;
+  --color-nav-ink: #d6d3d1;
+  --color-nav-label: #78716c;
+  --color-on-nav: #1c1917;
+  --color-accent: #fb923c;
+  --color-accent-dark: #fdba74;
+  --color-on-accent: #1c1917;
+  --color-blue-bg: #172340;
+  --color-blue-ink: #93b4fd;
+  --color-green-bg: #10291a;
+  --color-green-ink: #86efac;
+  --color-green: #22c55e;
+  --color-amber-bg: #3a1f0b;
+  --color-amber-ink: #fdba74;
+  --color-amber: #f59e0b;
+  --color-red-bg: #3b1212;
+  --color-red-ink: #fca5a5;
+  --color-red: #ef4444;
+  --color-grey-bg: #262220;
+  --color-grey-ink: #d6d3d1;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 24px rgb(0 0 0 / 0.25);
 }
 
 html, body, #root { min-height: 100%; }
-body { margin: 0; background: var(--color-bg); color: var(--color-ink); font-family: var(--font-sans); font-size: 14px; }
+body { margin: 0; background: var(--color-bg); color: var(--color-ink); font-family: var(--font-sans); font-size: 14px; transition: background-color .2s ease, color .2s ease; }
 a { color: var(--color-accent); }
 a:hover { color: var(--color-accent-dark); }
 :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+dialog { background: var(--color-surface); color: var(--color-ink); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }

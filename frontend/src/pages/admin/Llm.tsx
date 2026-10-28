@@ -96,7 +96,7 @@ export default function Llm() {
             <Card>
               <form className="flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); sw.mutate(); }}>
                 <CardTitle>Режим генерации</CardTitle>
-                <div role="radiogroup" aria-label="Режим генерации" className="grid grid-cols-3 overflow-hidden rounded-lg border border-field">
+                <div role="radiogroup" aria-label="Режим генерации" className="grid grid-cols-3 overflow-hidden rounded-xl border border-field">
                   {MODES.map((m) => (
                     <button key={m.mode} type="button" role="radio" aria-checked={target === m.mode} onClick={() => setMode(m.mode)}
                       className={cx("border-l border-field px-3 py-2.5 text-left first:border-l-0", target === m.mode ? "bg-blue-bg text-blue-ink" : "hover:bg-bg")}>

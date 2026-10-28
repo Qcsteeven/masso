@@ -3,6 +3,7 @@ import type { Role } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
 import { Icon, Logo, type IconName } from "./icons";
 import { cx } from "./ui";
+import { useTheme } from "../theme";
 import { LlmModeBanner } from "./LlmModeBanner";
 
 interface NavItem { to: string; label: string; icon: IconName; end?: boolean }
@@ -34,35 +35,57 @@ const NAV: { role: Role; title: string; items: NavItem[] }[] = [
   ] },
 ];
 
+export function ThemeToggle() {
+  const [theme, toggle] = useTheme();
+  const dark = theme === "dark";
+  return (
+    <button type="button" onClick={toggle} aria-label={dark ? "Светлая тема" : "Тёмная тема"} title={dark ? "Светлая тема" : "Тёмная тема"}
+      className="grid size-10 shrink-0 place-items-center rounded-full border border-line bg-surface text-label shadow-card transition-colors hover:text-accent">
+      <Icon name={dark ? "sun" : "moon"} size={18} />
+    </button>
+  );
+}
+
+function initialsOf(fullName: string): string {
+  const parts = fullName.split(/\s+/);
+  return (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "");
+}
+
 export function AppLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   if (!user) return null;
   const sections = NAV.filter((s) => user.roles.includes(s.role));
   return (
-    <div className="flex min-h-screen flex-wrap">
-      <nav aria-label="Основное меню" className="flex flex-[1_1_232px] flex-col gap-0.5 bg-nav px-3 py-5 text-nav-ink md:max-w-[260px]">
-        <div className="flex items-center gap-2.5 px-2.5 pb-5 text-[17px] font-bold tracking-[0.06em] text-white"><Logo />МАССО</div>
-        {sections.map((s) => (
-          <div key={s.role} className="flex flex-col gap-0.5">
-            <div className="px-3 pb-1.5 pt-4 text-[11px] uppercase tracking-[0.1em] text-nav-label">{s.title}</div>
-            {s.items.map((i) => (
-              <NavLink key={i.to} to={i.to} end={i.end}
-                className={({ isActive }) => cx("flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm no-underline",
-                  isActive ? "bg-accent !text-white" : "!text-nav-ink hover:bg-nav-hover hover:!text-white")}>
-                <Icon name={i.icon} />{i.label}
-              </NavLink>
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-20 bg-bg/85 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-[1440px] items-center gap-3 px-6 py-3 max-sm:px-3">
+          <nav aria-label="Основное меню" className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto rounded-full border border-line bg-surface p-1 shadow-card">
+            <span className="flex shrink-0 items-center gap-2 pl-1.5 pr-3 text-[15px] font-semibold tracking-[0.04em]"><Logo size={30} />МАССО</span>
+            {sections.map((s, n) => (
+              <div key={s.role} role="group" aria-label={s.title} className={cx("flex shrink-0 items-center gap-1", n > 0 && "border-l border-line pl-1")}>
+                {s.items.map((i) => (
+                  <NavLink key={i.to} to={i.to} end={i.end}
+                    className={({ isActive }) => cx("flex min-h-9 shrink-0 items-center gap-2 rounded-full px-4 text-sm no-underline transition-colors",
+                      isActive ? "bg-nav !text-on-nav" : "!text-nav-ink hover:bg-nav-hover hover:!text-ink")}>
+                    <Icon name={i.icon} size={17} />{i.label}
+                  </NavLink>
+                ))}
+              </div>
             ))}
+          </nav>
+          <ThemeToggle />
+          <div className="flex shrink-0 items-center gap-1 rounded-full border border-line bg-surface p-1 pl-1 shadow-card">
+            <span aria-hidden title={user.full_name} className="grid size-8 place-items-center rounded-full bg-amber-bg text-xs font-semibold text-amber-ink">{initialsOf(user.full_name)}</span>
+            <span className="max-w-[180px] truncate px-2 text-sm max-lg:hidden">{user.full_name}</span>
+            <button type="button" aria-label="Выйти" title="Выйти" onClick={async () => { await logout(); navigate("/login"); }}
+              className="grid size-8 place-items-center rounded-full text-label transition-colors hover:bg-nav-hover hover:text-ink">
+              <Icon name="logout" size={17} />
+            </button>
           </div>
-        ))}
-        <div className="grow" />
-        <div className="px-3 pb-2 pt-4 text-xs text-nav-label">{user.full_name}</div>
-        <button type="button" onClick={async () => { await logout(); navigate("/login"); }}
-          className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-left text-sm text-nav-ink hover:bg-nav-hover hover:text-white">
-          <Icon name="logout" />Выйти
-        </button>
-      </nav>
-      <div className="flex min-w-0 flex-[999_1_560px] flex-col">
+        </div>
+      </header>
+      <div className="mx-auto flex w-full min-w-0 max-w-[1440px] flex-1 flex-col">
         {user.roles.includes("teacher") && <LlmModeBanner />}
         <Outlet />
       </div>
@@ -72,37 +95,17 @@ export function AppLayout() {
 
 export function PageHeader({ title, subtitle, actions, crumbs }: { title: string; subtitle?: React.ReactNode; actions?: React.ReactNode; crumbs?: React.ReactNode }) {
   return (
-    <header className="flex flex-wrap items-center justify-between gap-4 border-b border-line bg-surface px-8 py-3.5">
+    <header className="flex flex-wrap items-end justify-between gap-4 px-8 pb-1 pt-6 max-sm:px-4">
       <div className="min-w-0">
-        {crumbs && <div className="text-[13px] text-muted">{crumbs}</div>}
-        <h1 className="m-0 text-[22px] font-semibold">{title}</h1>
-        {subtitle && <div className="text-[13px] text-muted">{subtitle}</div>}
+        {crumbs && <div className="mb-1 text-[13px] text-muted">{crumbs}</div>}
+        <h1 className="m-0 text-[28px] font-semibold leading-tight tracking-tight">{title}</h1>
+        {subtitle && <div className="mt-1 text-sm text-muted">{subtitle}</div>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2.5">{actions}</div>}
     </header>
   );
 }
 
-const ROLE_LABEL: Record<Role, string> = {
-  student: "обучающийся", teacher: "преподаватель", methodist: "методист", admin: "администратор", sysadmin: "системный администратор",
-};
-
-export function UserBadge() {
-  const { user } = useAuth();
-  if (!user) return null;
-  const parts = user.full_name.split(/\s+/);
-  const initials = (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "");
-  return (
-    <div className="flex items-center gap-3">
-      <div className="text-right leading-tight">
-        <div className="text-sm font-semibold">{user.full_name}</div>
-        <div className="text-xs text-muted">{user.roles.map((r) => ROLE_LABEL[r]).join(", ")}</div>
-      </div>
-      <span aria-hidden className="grid size-10 place-items-center rounded-full bg-blue-bg text-sm font-semibold text-blue-ink">{initials}</span>
-    </div>
-  );
-}
-
 export function Page({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <main className={cx("flex flex-col gap-5 px-8 pb-8 pt-5", className)}>{children}</main>;
+  return <main className={cx("flex flex-col gap-5 px-8 pb-10 pt-5 max-sm:px-4", className)}>{children}</main>;
 }

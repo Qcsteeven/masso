@@ -114,7 +114,7 @@ export default function Trace() {
                     {list.map((e) => {
                       const t = TYPE[e.type] ?? { label: e.type, tone: "grey" as Tone };
                       return (
-                        <tr key={e.id} className={cx(e.type === "incident" && "bg-[#fffaeb]", e.type === "security" && "bg-[#fdf3f2]")}>
+                        <tr key={e.id} className={cx(e.type === "incident" && "bg-amber-bg/60", e.type === "security" && "bg-red-bg/60")}>
                           <td className="whitespace-nowrap font-mono">{hhmmss(e.created_at)}</td>
                           <td><Chip tone={t.tone}>{t.label}</Chip></td>
                           <td className={cx(e.severity === "warning" && "text-amber-ink", (e.severity === "error" || e.severity === "critical") && "text-red-ink", e.severity === "info" && "text-muted")}>{e.severity}</td>

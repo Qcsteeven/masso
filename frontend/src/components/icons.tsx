@@ -24,6 +24,8 @@ const paths: Record<string, string> = {
   target: "M20.5 12a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0M16.5 12a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0M13 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0",
   info: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M12 11v6M12 7.5v.01",
   spinner: "M12 3a9 9 0 1 0 9 9",
+  sun: "M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4",
+  moon: "M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z",
 };
 
 export type IconName = keyof typeof paths;
@@ -40,9 +42,9 @@ export function Icon({ name, size = 20, ...rest }: { name: IconName; size?: numb
 export function Logo({ size = 32 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
-      <rect width="44" height="44" rx="10" fill="#1D5FD1" />
-      <g stroke="#fff" strokeWidth="2.4" fill="none"><path d="M14 15l8 14M30 15l-8 14M14 15h16" /></g>
-      <g fill="#fff"><circle cx="14" cy="15" r="3.8" /><circle cx="30" cy="15" r="3.8" /><circle cx="22" cy="29" r="3.8" /></g>
+      <rect width="44" height="44" rx="14" fill="var(--color-accent)" />
+      <g stroke="var(--color-on-accent)" strokeWidth="2.4" fill="none"><path d="M14 15l8 14M30 15l-8 14M14 15h16" /></g>
+      <g fill="var(--color-on-accent)"><circle cx="14" cy="15" r="3.8" /><circle cx="30" cy="15" r="3.8" /><circle cx="22" cy="29" r="3.8" /></g>
     </svg>
   );
 }

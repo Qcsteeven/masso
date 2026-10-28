@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import { api } from "../../api/client";
 import { DOMAIN_LABEL, type AnswerForm, type HintOut, type ScenarioPublic, type SessionEvent, type SessionView, type SubmitOut } from "../../api/types";
 import { Icon, type IconName } from "../../components/icons";
+import { ThemeToggle } from "../../components/Layout";
 import { Banner, Button, Card, CardTitle, Chip, ErrorBanner, Loading, Textarea, cx, fmtTime, type Tone } from "../../components/ui";
 import { AnswerFormCard, DocumentViewer, type Answers } from "./DocumentTrainer";
 import { Terminal } from "./Terminal";
@@ -171,26 +172,26 @@ export default function Workspace() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="flex flex-wrap items-center gap-x-6 gap-y-3 bg-nav px-6 py-3 text-white">
-        <Link to="/student" className="flex min-h-11 items-center gap-2 !text-nav-ink no-underline hover:!text-white">
-          <Icon name="back" size={18} />К назначениям
+      <header className="sticky top-0 z-20 flex flex-wrap items-center gap-x-5 gap-y-3 bg-bg/85 px-6 py-3 backdrop-blur-md max-sm:px-3">
+        <Link to="/student" className="flex min-h-10 items-center gap-1.5 rounded-full border border-line bg-surface px-4 text-sm !text-nav-ink no-underline shadow-card transition-colors hover:!text-ink">
+          <Icon name="back" size={16} />К назначениям
         </Link>
         <div className="min-w-0 flex-1">
-          <h1 className="m-0 truncate text-lg font-semibold">{sc.title}</h1>
-          <div className="font-mono text-xs text-nav-label">
+          <div className="truncate font-mono text-xs text-muted">
             сессия {s.id.slice(0, 8)} · {DOMAIN_LABEL[sc.domain] ?? sc.domain} · сложность {sc.difficulty} из 5
           </div>
+          <h1 className="m-0 truncate text-xl font-semibold tracking-tight">{sc.title}</h1>
         </div>
         <Chip tone={st.tone}><span className="size-1.5 rounded-full bg-current" />{st.label}</Chip>
         <div className="flex items-baseline gap-2" aria-label="Оставшееся время">
           <Icon name="clock" size={18} className="self-center" />
-          <span role="timer" className={cx("font-mono text-2xl", remaining != null && remaining < 300 && "text-[#f2c46d]")}>
+          <span role="timer" className={cx("font-mono text-2xl", remaining != null && remaining < 300 && "text-amber-ink")}>
             {remaining != null ? mmss(remaining) : "--:--"}
           </span>
-          <span className="text-xs text-nav-label">из {mmss(s.time_limit_min * 60)}</span>
+          <span className="text-xs text-muted">из {mmss(s.time_limit_min * 60)}</span>
         </div>
         {live && (
-          <Button variant="ghost" className="!text-nav-ink hover:!bg-nav-hover" icon={s.status === "paused" ? "activity" : "clock"}
+          <Button icon={s.status === "paused" ? "activity" : "clock"}
             loading={pause.isPending} onClick={() => pause.mutate()}>
             {s.status === "paused" ? "Продолжить" : "Пауза"}
           </Button>
@@ -198,6 +199,7 @@ export default function Workspace() {
         <Button variant="primary" disabled={!live} loading={submit.isPending} onClick={() => dialog.current?.showModal()}>
           Завершить и отправить на проверку
         </Button>
+        <ThemeToggle />
       </header>
 
       <div className="flex flex-col gap-3 px-6 pt-4 empty:hidden">
@@ -209,12 +211,12 @@ export default function Workspace() {
         <ErrorBanner error={submit.error || pause.error} />
       </div>
 
-      <div className="grid flex-1 grid-cols-1 gap-4 p-6 lg:grid-cols-[minmax(240px,300px)_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_320px]">
+      <div className="grid flex-1 grid-cols-1 gap-4 px-6 pb-6 pt-2 max-sm:px-3 lg:grid-cols-[minmax(240px,300px)_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_320px]">
         <Card className="flex flex-col gap-4 self-start">
           <CardTitle>Легенда</CardTitle>
           <p className="m-0 whitespace-pre-line text-[15px] leading-relaxed">{sc.legend}</p>
           <div>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Критерии оценивания</div>
+            <div className="mb-2 text-xs font-medium text-muted">Критерии оценивания</div>
             <ul className="m-0 flex list-none flex-col gap-2 p-0">
               {sc.criteria.map((c) => {
                 const res = [...events].reverse().find((e) => e.type === "check" && e.payload.title === c);
@@ -231,7 +233,7 @@ export default function Workspace() {
             </ul>
           </div>
           <div className="border-t border-line-soft pt-3">
-            <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted">Ограничения среды</div>
+            <div className="mb-1.5 text-xs font-medium text-muted">Ограничения среды</div>
             <p className="m-0 text-[13px] text-muted">{sc.constraints || "Пользователь без прав администратора · сеть отключена · запись только в рабочий каталог · лимиты профиля среды"}</p>
           </div>
         </Card>
@@ -296,7 +298,7 @@ export default function Workspace() {
         </div>
       </div>
 
-      <dialog ref={dialog} aria-labelledby="submit-title" className="m-auto w-[min(92vw,480px)] rounded-card border border-line p-0 backdrop:bg-black/40">
+      <dialog ref={dialog} aria-labelledby="submit-title" className="m-auto w-[min(92vw,480px)] rounded-card border border-line p-0 shadow-card backdrop:bg-black/40 backdrop:backdrop-blur-sm">
         <div className="flex flex-col gap-4 p-6">
           <h2 id="submit-title" className="m-0 text-lg font-semibold">Завершить и отправить на проверку?</h2>
           <p className="m-0 text-sm text-muted">

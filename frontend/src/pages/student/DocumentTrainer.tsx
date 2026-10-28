@@ -83,7 +83,7 @@ function Findings({ form, defectTypes, value, onChange, disabled }: {
     <div className="flex flex-col gap-4">
       {!value.length && <p className="m-0 text-sm text-muted">Добавьте найденные несоответствия: раздел, тип и предлагаемую редакцию.</p>}
       {value.map((f, i) => (
-        <fieldset key={i} className="flex flex-col gap-3 rounded-lg border border-line p-4">
+        <fieldset key={i} className="flex flex-col gap-3 rounded-xl border border-line p-4">
           <legend className="px-1 text-sm font-semibold">Несоответствие {i + 1}</legend>
           <FieldRow label={form.fields.section} required>
             {(id) => (

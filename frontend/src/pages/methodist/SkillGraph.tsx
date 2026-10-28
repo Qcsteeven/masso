@@ -11,14 +11,15 @@ import { SKILL_STATUS_LABEL, type SkillGraph as Graph, type SkillNode, type Skil
 import { Page, PageHeader } from "../../components/Layout";
 import { Banner, Button, Card, CardTitle, Chip, ErrorBanner, FieldRow, Input, Loading, Select, Textarea, cx } from "../../components/ui";
 import { layeredLayout } from "./layout";
+import { useTheme } from "../../theme";
 
 type SkillData = { skill: SkillNode; selected: boolean };
 
 function SkillCard({ data }: NodeProps<Node<SkillData>>) {
   const s = data.skill;
   return (
-    <div className={cx("w-[200px] rounded-lg border bg-white px-3 py-2.5 text-left shadow-sm",
-      data.selected ? "border-2 border-accent ring-4 ring-blue-bg" : "border-line")}>
+    <div className={cx("w-[200px] rounded-2xl border bg-surface px-3.5 py-2.5 text-left shadow-card transition-shadow",
+      data.selected ? "border-2 border-accent ring-4 ring-amber-bg" : "border-line")}>
       <Handle type="target" position={Position.Top} className="!bg-muted" />
       <div className="font-mono text-[11px] text-muted">{s.code}</div>
       <div className="text-[13px] font-semibold leading-tight">{s.name}</div>
@@ -37,6 +38,7 @@ const nodeTypes = { skill: SkillCard };
 interface Draft { id: string | null; code: string; name: string; description: string; domain_code: string; level_max: number; status: SkillStatus; requires: { skill_id: string; weight: number }[] }
 
 function GraphCanvas({ graph, domain, selected, onSelect, relayout }: { graph: Graph; domain: string; selected: string | null; onSelect: (id: string) => void; relayout: number }) {
+  const [theme] = useTheme();
   const rf = useReactFlow();
   const skills = useMemo(() => graph.skills.filter((s) => s.domain_code === domain), [graph, domain]);
   const ids = useMemo(() => new Set(skills.map((s) => s.id)), [skills]);
@@ -58,17 +60,18 @@ function GraphCanvas({ graph, domain, selected, onSelect, relayout }: { graph: G
   const shown = nodes.map((n) => ({ ...n, data: { ...n.data, selected: n.id === selected } }));
   const edges: Edge[] = edgesIn.map((e) => ({
     id: `${e.requires_skill_id}-${e.skill_id}`, source: e.requires_skill_id, target: e.skill_id, type: "smoothstep",
-    markerEnd: { type: MarkerType.ArrowClosed, color: "#556270" },
+    markerEnd: { type: MarkerType.ArrowClosed, color: e.skill_id === selected ? "var(--color-accent)" : "var(--color-muted)" },
     label: e.skill_id === selected || e.requires_skill_id === selected ? e.weight.toFixed(1).replace(".", ",") : undefined,
-    style: { stroke: e.skill_id === selected ? "#1d5fd1" : "#7f8b97", strokeWidth: e.skill_id === selected ? 2 : 1.25 },
-    labelStyle: { fill: "#1747a6", fontFamily: "IBM Plex Mono", fontSize: 12 },
+    style: { stroke: e.skill_id === selected ? "var(--color-accent)" : "var(--color-muted)", strokeWidth: e.skill_id === selected ? 2 : 1.25 },
+    labelStyle: { fill: "var(--color-amber-ink)", fontFamily: "IBM Plex Mono", fontSize: 12 },
+    labelBgStyle: { fill: "var(--color-surface)" },
   }));
   return (
-    <div className="h-[600px] bg-[radial-gradient(#d5dce3_1px,transparent_1px)] [background-size:16px_16px]">
-      <ReactFlow nodes={shown} edges={edges} nodeTypes={nodeTypes} minZoom={0.2} fitView fitViewOptions={{ minZoom: 0.7, maxZoom: 1 }} proOptions={{ hideAttribution: true }}
+    <div className="h-[600px]">
+      <ReactFlow colorMode={theme} nodes={shown} edges={edges} nodeTypes={nodeTypes} minZoom={0.2} fitView fitViewOptions={{ minZoom: 0.7, maxZoom: 1 }} proOptions={{ hideAttribution: true }}
         onNodesChange={(ch: NodeChange<Node<SkillData>>[]) => setNodes((ns) => applyNodeChanges(ch, ns))}
         onNodeClick={(_, n) => onSelect(n.id)} nodesConnectable={false}>
-        <Background gap={16} color="#d5dce3" />
+        <Background gap={16} color="var(--color-field)" />
       </ReactFlow>
     </div>
   );
@@ -179,7 +182,7 @@ export default function SkillGraph() {
               {g.domains.map((d) => (
                 <button key={d.code} type="button" aria-current={d.code === domain}
                   onClick={() => { setDomain(d.code); setSelected(null); setDraft(null); }}
-                  className={cx("flex min-h-10 items-center justify-between gap-2 rounded-lg px-3 text-left text-sm",
+                  className={cx("flex min-h-10 items-center justify-between gap-2 rounded-xl px-3 text-left text-sm",
                     d.code === domain ? "bg-blue-bg font-semibold text-blue-ink" : "hover:bg-bg")}>
                   <span>{d.name}</span><span className="font-mono text-xs">{d.skills_count}</span>
                 </button>
@@ -216,7 +219,7 @@ export default function SkillGraph() {
                   {(id) => <Select id={id} value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value as SkillStatus })}>{Object.entries(SKILL_STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select>}
                 </FieldRow>
                 <FieldRow label="Описание" top>{(id) => <Textarea id={id} rows={2} value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />}</FieldRow>
-                <div className="border-t border-line-soft pt-3 text-xs font-semibold uppercase tracking-wider text-muted">Требует (requires)</div>
+                <div className="border-t border-line-soft pt-3 text-xs font-semibold text-muted">Требует (requires)</div>
                 {draft.requires.map((r, i) => (
                   <div key={r.skill_id} className="grid grid-cols-[minmax(0,1fr)_76px_40px] items-center gap-2 text-sm">
                     <span className="truncate">{g.skills.find((s) => s.id === r.skill_id)?.name}</span>

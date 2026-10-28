@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router";
 import { api } from "../../api/client";
 import { DOMAIN_LABEL, KIND_LABEL, PRIORITY_LABEL, type Assignment, type MyReport, type MySkill, type Recommendations, type SessionStatus } from "../../api/types";
 import { useAuth } from "../../auth/AuthContext";
-import { Page, PageHeader, UserBadge } from "../../components/Layout";
+import { Page, PageHeader } from "../../components/Layout";
 import { Icon } from "../../components/icons";
 import { Banner, Bar, Button, Card, CardTitle, Chip, Empty, ErrorBanner, Kpi, Loading, Select, Table, type Tone } from "../../components/ui";
 import { useStartScenario } from "./useStartScenario";
@@ -60,8 +60,7 @@ export default function Home() {
 
   return (
     <>
-      <PageHeader title="Мои назначения" subtitle={`${user?.group_code ?? "Группа не указана"} · ${DOMAIN_LABEL[domain] ?? domain}`}
-        actions={<UserBadge />} />
+      <PageHeader title="Мои назначения" subtitle={`${user?.group_code ?? "Группа не указана"} · ${DOMAIN_LABEL[domain] ?? domain}`} />
       <Page>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
           <Kpi label="Назначено" value={list.length} hint={nextDue ? `ближайший срок ${fmtDayMonth(nextDue)}` : "сроки не заданы"} />

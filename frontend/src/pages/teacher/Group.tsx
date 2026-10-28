@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { api, download } from "../../api/client";
 import { DOMAIN_LABEL, REVIEW_LABEL, REVIEW_TONE, type GroupOverview } from "../../api/types";
-import { Page, PageHeader, UserBadge } from "../../components/Layout";
+import { Page, PageHeader } from "../../components/Layout";
 import { defaultPeriod, periodError, periodQuery, type Period } from "../../components/period";
 import { Banner, Bar, Button, Card, CardTitle, Chip, Empty, ErrorBanner, Filter, Input, Kpi, Loading, Select, Table } from "../../components/ui";
 
@@ -59,7 +59,7 @@ export default function Group() {
 
   return (
     <>
-      <PageHeader title="Панель группы" subtitle="Результаты сессий, проблемные навыки и расхождения оценок" actions={<UserBadge />} />
+      <PageHeader title="Панель группы" subtitle="Результаты сессий, проблемные навыки и расхождения оценок" />
       <Page>
         <Card>
           <form className="flex flex-wrap items-end gap-4" onSubmit={(e) => { e.preventDefault(); setApplied(draft); }}>
