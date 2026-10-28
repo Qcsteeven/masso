@@ -15,6 +15,29 @@ export function useGroups() {
 
 const dm = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" }) : "—");
 
+/** Sessions of the period: the whole row opens the digital trace; the «Открыть» link keeps it keyboard-reachable. */
+export function SessionsTable({ sessions }: { sessions: GroupOverview["sessions"] }) {
+  const navigate = useNavigate();
+  return (
+    <Table>
+      <thead><tr><th>Обучающийся</th><th>Сценарий</th><th>Дата</th><th>Авто</th><th>Эксперт</th><th>Статус оценки</th><th><span className="sr-only">Цифровой след</span></th></tr></thead>
+      <tbody>
+        {sessions.map((s) => (
+          <tr key={s.session_id} className="cursor-pointer hover:bg-bg" onClick={() => navigate(`/teacher/sessions/${s.session_id}`)}>
+            <td>{s.student}</td>
+            <td>{s.title}</td>
+            <td className="font-mono">{dm(s.finished_at)}</td>
+            <td>{s.auto_score}</td>
+            <td>{s.expert_score ?? "—"}</td>
+            <td><Chip tone={REVIEW_TONE[s.review_status]}>{REVIEW_LABEL[s.review_status]}</Chip></td>
+            <td><Link to={`/teacher/sessions/${s.session_id}`} aria-label={`Открыть цифровой след: ${s.student}`} onClick={(e) => e.stopPropagation()}>Открыть</Link></td>
+          </tr>
+        ))}
+      </tbody>
+    </Table>
+  );
+}
+
 export default function Group() {
   const navigate = useNavigate();
   const groups = useGroups();
@@ -77,22 +100,7 @@ export default function Group() {
                 </div>
                 <ErrorBanner error={csv.error} />
                 {!d.sessions.length ? <Empty>За выбранный период завершённых сессий нет.</Empty> : (
-                  <Table>
-                    <thead><tr><th>Обучающийся</th><th>Сценарий</th><th>Дата</th><th>Авто</th><th>Эксперт</th><th>Статус оценки</th><th><span className="sr-only">След</span></th></tr></thead>
-                    <tbody>
-                      {d.sessions.map((s) => (
-                        <tr key={s.session_id}>
-                          <td>{s.student}</td>
-                          <td>{s.title}</td>
-                          <td className="font-mono">{dm(s.finished_at)}</td>
-                          <td>{s.auto_score}</td>
-                          <td>{s.expert_score ?? "—"}</td>
-                          <td><Chip tone={REVIEW_TONE[s.review_status]}>{REVIEW_LABEL[s.review_status]}</Chip></td>
-                          <td><Link to={`/teacher/sessions/${s.session_id}`} aria-label={`Цифровой след: ${s.student}`}>След</Link></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
+                  <SessionsTable sessions={d.sessions} />
                 )}
               </Card>
               <Card className="flex flex-col gap-3">
