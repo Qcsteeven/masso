@@ -61,6 +61,10 @@ services:
       GPT2GIGA_API_KEY: ${LLM_EXTERNAL_API_KEY:-}
       GPT2GIGA_PASS_MODEL: "True"
       GPT2GIGA_CORS_ALLOW_ORIGINS: "[]"
+      # GigaChat for individuals (GIGACHAT_API_PERS) serves one request at a time and answers 429 otherwise:
+      # the proxy queues requests per model; a request waiting longer falls back to the template mode
+      GPT2GIGA_MODEL_MAX_CONNECTIONS_DEFAULT: ${GIGACHAT_MAX_CONCURRENCY:-1}
+      GPT2GIGA_MODEL_MAX_CONNECTIONS_ACQUIRE_TIMEOUT: "45"
       GIGACHAT_CREDENTIALS: ${GIGACHAT_CREDENTIALS:-}
       GIGACHAT_SCOPE: ${GIGACHAT_SCOPE:-GIGACHAT_API_PERS}
       GIGACHAT_MODEL: ${LLM_EXTERNAL_CHAT_MODEL:-GigaChat-2}

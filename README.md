@@ -50,6 +50,8 @@ LLM_EXTERNAL_EMBED_MODEL=                   # эмбеддинги GigaChat пл
 LLM_GENERATION_MODE=external
 ```
 
+Тариф для физлиц (`GIGACHAT_API_PERS`) обслуживает один запрос за раз и на второй одновременный отвечает 429, поэтому прокси держит очередь на модель (`GIGACHAT_MAX_CONCURRENCY`, по умолчанию 1; ожидание до 45 с, дальше — шаблонный режим). С ключом юрлица увеличьте значение по договору.
+
 Затем `make up && make seed` и проверка из контейнера backend (имя `gpt2giga` есть только в сети compose): `docker compose exec -T backend python - external < scripts/llm_smoke.py` — печатает легенду, провайдер, токены и источник эмбеддингов. При недоступности GigaChat генерация уходит в шаблонный режим, активные сессии не прерываются.
 
 *Эксплуатация (HTTPS).* В `make up-tls` прокси проверяет сертификат GigaChat: `docker-compose.tls.yml` включает `GIGACHAT_VERIFY_SSL_CERTS=True` и берёт корневой сертификат НУЦ Минцифры из каталога сертификатов. Положите его туда один раз:
