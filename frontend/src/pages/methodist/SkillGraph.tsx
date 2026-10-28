@@ -9,10 +9,11 @@ import { useNavigate } from "react-router";
 import { api } from "../../api/client";
 import { SKILL_STATUS_LABEL, type SkillGraph as Graph, type SkillNode, type SkillStatus } from "../../api/types";
 import { Page, PageHeader } from "../../components/Layout";
-import { Banner, Button, Card, CardTitle, Chip, ErrorBanner, FieldRow, Input, Loading, Select, Textarea, cx } from "../../components/ui";
+import { Banner, Button, Card, CardTitle, Chip, Empty, ErrorBanner, FieldRow, Input, Loading, Select, Textarea, cx } from "../../components/ui";
 import { layeredLayout } from "./layout";
 import { useTheme } from "../../theme";
 import { Markdown } from "../../components/Markdown";
+import type { DomainInfo } from "../../api/domains";
 
 type SkillData = { skill: SkillNode; selected: boolean };
 
@@ -106,6 +107,42 @@ function ZoomButtons({ onRelayout }: { onRelayout: () => void }) {
   );
 }
 
+interface DomainForm { code: string; name: string; description: string; isNew: boolean }
+
+/** Create or rename a domain (subject area): a reference kept by the methodist (ТЗ 4.10). */
+function DomainDialog({ dialog, form, setForm, onDone }: {
+  dialog: React.RefObject<HTMLDialogElement | null>; form: DomainForm | null; setForm: (f: DomainForm) => void; onDone: (code: string) => void;
+}) {
+  const m = useMutation({
+    mutationFn: (f: DomainForm) => f.isNew
+      ? api.post<DomainInfo>("/api/skills/domains", { code: f.code, name: f.name, description: f.description })
+      : api.patch<DomainInfo>(`/api/skills/domains/${f.code}`, { name: f.name, description: f.description }),
+    onSuccess: (d) => { dialog.current?.close(); onDone(d.code); },
+  });
+  return (
+    <dialog ref={dialog} aria-labelledby="dom-title" onClose={() => m.reset()} className="m-auto w-[min(94vw,560px)] rounded-card border border-line p-0 shadow-card backdrop:bg-black/40">
+      {form && (
+        <form className="flex flex-col gap-4 p-6" onSubmit={(e) => { e.preventDefault(); m.mutate(form); }}>
+          <h2 id="dom-title" className="m-0 text-lg font-semibold">{form.isNew ? "Новый домен" : "Домен"}</h2>
+          <p className="m-0 text-sm text-muted">Домен — предметная область (направление обучения): к нему относятся навыки, целевые уровни и шаблоны сценариев.</p>
+          <FieldRow label="Код" required>{(id) => (
+            <Input id={id} required readOnly={!form.isNew} pattern="[a-z][a-z0-9_]{1,31}" title="Латиница в нижнем регистре, цифры и _, от 2 символов"
+              placeholder="dataeng" className="font-mono" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toLowerCase() })} />
+          )}</FieldRow>
+          <FieldRow label="Название" required>{(id) => <Input id={id} required minLength={2} maxLength={128} placeholder="Инженерия данных" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />}</FieldRow>
+          <FieldRow label="Описание" top>{(id) => <Textarea id={id} rows={3} maxLength={2000} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />}</FieldRow>
+          {form.isNew && <p className="m-0 text-xs text-muted">Код задаётся один раз и используется в импорте и шаблонах; название можно поменять позже.</p>}
+          <ErrorBanner error={m.error} />
+          <div className="flex justify-end gap-2.5">
+            <Button onClick={() => dialog.current?.close()}>Отмена</Button>
+            <Button type="submit" variant="primary" loading={m.isPending}>{form.isNew ? "Создать домен" : "Сохранить"}</Button>
+          </div>
+        </form>
+      )}
+    </dialog>
+  );
+}
+
 function ImportDialog({ dialog, onDone }: { dialog: React.RefObject<HTMLDialogElement | null>; onDone: () => void }) {
   const [fmt, setFmt] = useState<"json" | "csv">("json");
   const [content, setContent] = useState("");
@@ -151,6 +188,9 @@ export default function SkillGraph() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [relayout, setRelayout] = useState(0);
   const importDlg = useRef<HTMLDialogElement>(null);
+  const domainDlg = useRef<HTMLDialogElement>(null);
+  const [domainForm, setDomainForm] = useState<DomainForm | null>(null);
+  const openDomain = (f: DomainForm) => { setDomainForm(f); domainDlg.current?.showModal(); };
 
   const select = (id: string) => {
     const s = g!.skills.find((x) => x.id === id)!;
@@ -195,7 +235,7 @@ export default function SkillGraph() {
       <Page>
         <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[230px_minmax(0,1fr)_340px]">
           <Card className="flex flex-col gap-1">
-            <CardTitle>Домены</CardTitle>
+            <CardTitle aside={<Button small icon="plus" onClick={() => openDomain({ code: "", name: "", description: "", isNew: true })}>Домен</Button>}>Домены</CardTitle>
             <nav aria-label="Домены" className="mt-2 flex flex-col gap-1">
               {g.domains.map((d) => (
                 <button key={d.code} type="button" aria-current={d.code === domain}
@@ -206,6 +246,12 @@ export default function SkillGraph() {
                 </button>
               ))}
             </nav>
+            {g.domains.some((d) => d.code === domain) && (
+              <Button small variant="ghost" className="mt-1 w-full" onClick={() => {
+                const d = g.domains.find((x) => x.code === domain)!;
+                openDomain({ code: d.code, name: d.name, description: d.description, isNew: false });
+              }} title={`Изменить название и описание: ${domainName}`}>Изменить домен</Button>
+            )}
             <div className="mt-4">
               <Banner tone={g.acyclic ? "green" : "red"} icon={g.acyclic ? "check" : "alert"}>
                 {g.acyclic ? "Циклов нет" : "Обнаружен цикл"} · {g.skills.length} навыков, {g.edges.length} связей
@@ -218,7 +264,9 @@ export default function SkillGraph() {
                 <h2 className="m-0 text-base font-semibold">{domainName}</h2>
                 <ZoomButtons onRelayout={() => setRelayout((x) => x + 1)} />
               </div>
-              <GraphCanvas graph={g} domain={domain} selected={selected} onSelect={select} relayout={relayout} />
+              {g.skills.some((x) => x.domain_code === domain)
+                ? <GraphCanvas graph={g} domain={domain} selected={selected} onSelect={select} relayout={relayout} />
+                : <Empty>В домене пока нет навыков. Добавьте их кнопкой «+ Навык» или импортом CSV / JSON, затем задайте целевые уровни.</Empty>}
             </ReactFlowProvider>
           </Card>
           <Card>
@@ -261,6 +309,11 @@ export default function SkillGraph() {
         </div>
       </Page>
       <ImportDialog dialog={importDlg} onDone={() => qc.invalidateQueries({ queryKey: ["skill-graph"] })} />
+      <DomainDialog dialog={domainDlg} form={domainForm} setForm={setDomainForm} onDone={(code) => {
+        qc.invalidateQueries({ queryKey: ["skill-graph"] });
+        qc.invalidateQueries({ queryKey: ["domains"] });
+        setDomain(code); setSelected(null); setDraft(null);
+      }} />
     </>
   );
 }

@@ -1,13 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { api } from "../../api/client";
-import { DOMAIN_LABEL, PRIORITY_LABEL, type Assignment, type MySkill, type Recommendations, type SkillGraph } from "../../api/types";
+import { PRIORITY_LABEL, type Assignment, type MySkill, type Recommendations, type SkillGraph } from "../../api/types";
 import { Page, PageHeader } from "../../components/Layout";
 import { Bar, Card, CardTitle, Chip, Empty, ErrorBanner, Filter, Loading, Select, Table, fmtDate } from "../../components/ui";
 import { PRIORITY_TONE } from "./Home";
 import { SkillMap } from "./SkillMap";
+import { useDomainLabel } from "../../api/domains";
 
 export default function Skills() {
+  const domainLabel = useDomainLabel();
   const skills = useQuery({ queryKey: ["skills-me"], queryFn: () => api.get<MySkill[]>("/api/skills/me") });
   const assignments = useQuery({ queryKey: ["assignments-me"], queryFn: () => api.get<Assignment[]>("/api/scenarios/assignments/me") });
   // the student's assigned directions first (as on «Мои назначения»), then the rest of the profile
@@ -32,7 +34,7 @@ export default function Skills() {
         actions={domains.length > 1 && (
           <Filter label="Направление">
             <Select value={domain} onChange={(e) => setSel(e.target.value)}>
-              {domains.map((d) => <option key={d} value={d}>{DOMAIN_LABEL[d] ?? d}</option>)}
+              {domains.map((d) => <option key={d} value={d}>{domainLabel(d)}</option>)}
             </Select>
           </Filter>
         )} />
@@ -40,7 +42,7 @@ export default function Skills() {
         {graph.error && <ErrorBanner error={graph.error} />}
         {graph.data && skills.data && <SkillMap graph={graph.data} skills={skills.data} deficits={recs.data?.deficits ?? []} domain={domain} />}
         <Card padded={false}>
-          <div className="p-5 pb-3"><CardTitle>Подробно: {DOMAIN_LABEL[domain] ?? domain}</CardTitle></div>
+          <div className="p-5 pb-3"><CardTitle>Подробно: {domainLabel(domain)}</CardTitle></div>
           {skills.isLoading ? <Loading /> : skills.error ? <div className="p-5"><ErrorBanner error={skills.error} /></div> : !rows.length ? (
             <Empty>Профиль ещё не сформирован.</Empty>
           ) : (

@@ -2,11 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { api } from "../../api/client";
-import { DOMAIN_LABEL, type SkillGraph, type TemplateFull, type ValidationStep } from "../../api/types";
+import { type SkillGraph, type TemplateFull, type ValidationStep } from "../../api/types";
 import { Icon } from "../../components/icons";
 import { Page, PageHeader } from "../../components/Layout";
 import { Banner, Button, Card, CardTitle, Chip, ErrorBanner, FieldRow, Input, Loading, Select, Table, Textarea, cx } from "../../components/ui";
 import { TPL_STATUS } from "./Templates";
+import { useDomainLabel } from "../../api/domains";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Spec = Record<string, any>;
@@ -33,6 +34,7 @@ function stepLabel(s: string): string {
 const TABS = ["Легенда", "Навыки", "Сбои и проверки", "Подсказки", "JSON"] as const;
 
 export default function TemplateEditor() {
+  const domainLabel = useDomainLabel();
   const { id = "" } = useParams();
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["template", id], queryFn: () => api.get<TemplateFull>(`/api/scenarios/templates/${id}`) });
@@ -124,7 +126,7 @@ export default function TemplateEditor() {
                       </div>
                     ))}
                     <Button className="self-start" onClick={() => upd((s) => s.target_skills.push({ skill: graph.data?.skills.find((x) => x.domain_code === spec.domain)?.code ?? "", weight: 0.5 }))}>+ Навык</Button>
-                    <p className="m-0 text-xs text-muted">Направление: {DOMAIN_LABEL[spec.domain] ?? spec.domain}. Навыки обновляются в профиле обучающегося после проверки.</p>
+                    <p className="m-0 text-xs text-muted">Направление: {domainLabel(spec.domain)}. Навыки обновляются в профиле обучающегося после проверки.</p>
                   </div>
                 )}
                 {tab === "Сбои и проверки" && (

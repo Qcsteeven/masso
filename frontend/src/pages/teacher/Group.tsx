@@ -2,10 +2,11 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { api, download } from "../../api/client";
-import { DOMAIN_LABEL, REVIEW_LABEL, REVIEW_TONE, type GroupOverview } from "../../api/types";
+import { REVIEW_LABEL, REVIEW_TONE, type GroupOverview } from "../../api/types";
 import { Page, PageHeader } from "../../components/Layout";
 import { defaultPeriod, periodError, periodQuery, type Period } from "../../components/period";
 import { Banner, Bar, Button, Card, CardTitle, Chip, Empty, ErrorBanner, Filter, Input, Kpi, Loading, Select, Table } from "../../components/ui";
+import { useDomains } from "../../api/domains";
 
 interface Filters extends Period { group: string; domain: string }
 
@@ -39,6 +40,7 @@ export function SessionsTable({ sessions }: { sessions: GroupOverview["sessions"
 }
 
 export default function Group() {
+  const domainList = useDomains();
   const navigate = useNavigate();
   const groups = useGroups();
   const initial: Filters = { ...defaultPeriod(), group: "", domain: "" };
@@ -71,7 +73,7 @@ export default function Group() {
             <Filter label="Направление">
               <Select className="min-w-52" value={draft.domain} onChange={set("domain")}>
                 <option value="">Все направления</option>
-                {Object.entries(DOMAIN_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                {(domainList.data ?? []).map((d) => <option key={d.code} value={d.code}>{d.name}</option>)}
               </Select>
             </Filter>
             <Filter label="Дата начала *"><Input type="date" required value={draft.from} onChange={set("from")} /></Filter>

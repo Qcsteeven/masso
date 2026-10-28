@@ -51,6 +51,17 @@ class GraphOut(BaseModel):
     acyclic: bool = True
 
 
+class DomainCreate(BaseModel):
+    code: str = Field(pattern=r"^[a-z][a-z0-9_]{1,31}$")  # latin, lower case: used in URLs and imports
+    name: str = Field(min_length=2, max_length=128)
+    description: str = Field(default="", max_length=2000)
+
+
+class DomainPatch(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=128)
+    description: str | None = Field(default=None, max_length=2000)
+
+
 class SkillCreate(BaseModel):
     code: str = Field(min_length=2, max_length=64, pattern=r"^[A-Z0-9_.\-]+$")
     domain_code: str

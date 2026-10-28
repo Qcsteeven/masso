@@ -7,7 +7,7 @@ from app.deps import DB, AuthorUser, Me, StudentUser, can_see_group
 from app.errors import AppError, ErrorCode, ok
 from app.profile_agent import service as profile
 from app.skills import service
-from app.skills.schemas import ImportIn, SkillCreate, SkillPatch, TargetsPut
+from app.skills.schemas import DomainCreate, DomainPatch, ImportIn, SkillCreate, SkillPatch, TargetsPut
 from app.users.models import User
 
 router = APIRouter(prefix="/api/skills", tags=["skills"])
@@ -16,6 +16,21 @@ router = APIRouter(prefix="/api/skills", tags=["skills"])
 @router.get("/graph")
 async def graph(user: Me, db: DB, domain: str | None = None) -> dict[str, Any]:
     return ok((await service.get_graph(db, domain)).model_dump(mode="json"))
+
+
+@router.get("/domains")
+async def domains(user: Me, db: DB) -> dict[str, Any]:
+    return ok([d.model_dump(mode="json") for d in await service.list_domains(db)])
+
+
+@router.post("/domains", status_code=201)
+async def create_domain(body: DomainCreate, user: AuthorUser, db: DB) -> dict[str, Any]:
+    return ok((await service.create_domain(db, user.id, body)).model_dump(mode="json"))
+
+
+@router.patch("/domains/{code}")
+async def patch_domain(code: str, body: DomainPatch, user: AuthorUser, db: DB) -> dict[str, Any]:
+    return ok((await service.patch_domain(db, user.id, code, body)).model_dump(mode="json"))
 
 
 @router.post("", status_code=201)

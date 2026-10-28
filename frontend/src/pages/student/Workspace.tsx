@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { ApiError, api } from "../../api/client";
-import { DOMAIN_LABEL, type AnswerForm, type HintOut, type ScenarioPublic, type SessionEvent, type SessionView, type SubmitOut } from "../../api/types";
+import { type AnswerForm, type HintOut, type ScenarioPublic, type SessionEvent, type SessionView, type SubmitOut } from "../../api/types";
 import { Icon, type IconName } from "../../components/icons";
 import { ThemeToggle } from "../../components/Layout";
 import { Banner, Button, Card, CardTitle, Chip, ErrorBanner, Loading, Textarea, cx, fmtTime, type Tone } from "../../components/ui";
@@ -10,6 +10,7 @@ import { AnswerFormCard, DocumentViewer, type Answers } from "./DocumentTrainer"
 import { Terminal } from "./Terminal";
 import { openSessionSocket } from "./ws";
 import { TheoryCard } from "../../components/Theory";
+import { useDomainLabel } from "../../api/domains";
 
 const STATUS_CHIP: Record<string, { label: string; tone: Tone }> = {
   starting: { label: "запуск среды", tone: "blue" },
@@ -94,6 +95,7 @@ function eventText(e: SessionEvent): string {
 }
 
 export default function Workspace() {
+  const domainLabel = useDomainLabel();
   const { id = "" } = useParams();
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -202,7 +204,7 @@ export default function Workspace() {
         </Link>
         <div className="min-w-0 flex-1">
           <div className="truncate font-mono text-xs text-muted">
-            сессия {s.id.slice(0, 8)} · {DOMAIN_LABEL[sc.domain] ?? sc.domain} · сложность {sc.difficulty} из 5
+            сессия {s.id.slice(0, 8)} · {domainLabel(sc.domain)} · сложность {sc.difficulty} из 5
           </div>
           <h1 className="m-0 truncate text-xl font-semibold tracking-tight">{sc.title}</h1>
         </div>

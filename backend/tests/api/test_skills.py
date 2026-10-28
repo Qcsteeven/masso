@@ -151,3 +151,39 @@ async def test_seed_import_fills_empty_theory_only(db: AsyncSession) -> None:
         db, {"skills": [{**base["skills"][0], "theory": "новый сид"}]}, actor_id=None, replace=False
     )
     assert s.theory == "новый сид"
+
+
+async def test_methodist_manages_domains(
+    client: AsyncClient, graph: None, as_methodist: dict[str, str], as_student: dict[str, str], db: AsyncSession
+) -> None:
+    body = {"code": "dataeng", "name": "Инженерия данных", "description": "ETL и хранилища"}
+    r = await client.post("/api/skills/domains", headers=as_methodist, json=body)
+    assert r.status_code == 201, r.text
+    assert r.json()["data"] == {**body, "skills_count": 0}
+    dup = await client.post("/api/skills/domains", headers=as_methodist, json=body)
+    assert dup.status_code == 422 and "уже существует" in dup.json()["error"]["message"]
+    bad = await client.post("/api/skills/domains", headers=as_methodist, json={**body, "code": "Data Eng"})
+    assert bad.status_code == 422
+    assert (
+        await client.post("/api/skills/domains", headers=as_student, json={**body, "code": "x2"})
+    ).status_code == 403
+    r = await client.patch("/api/skills/domains/dataeng", headers=as_methodist, json={"name": "Data Engineering"})
+    assert r.status_code == 200 and r.json()["data"]["name"] == "Data Engineering"
+    assert (
+        await client.patch("/api/skills/domains/nope", headers=as_methodist, json={"name": "Нет такого"})
+    ).status_code == 404
+    listed = (await client.get("/api/skills/domains", headers=as_student)).json()["data"]
+    assert {
+        "code": "dataeng",
+        "name": "Data Engineering",
+        "description": "ETL и хранилища",
+        "skills_count": 0,
+    } in listed
+    assert any(d["code"] == "devops" and d["skills_count"] > 0 for d in listed)
+    actions = (await db.scalars(select(AuditLog.action).where(AuditLog.object_type == "domain"))).all()
+    assert sorted(actions) == ["domain.create", "domain.update"]
+    # a skill can be created in the new domain right away
+    s = await client.post(
+        "/api/skills", headers=as_methodist, json={"code": "DE.SQL", "domain_code": "dataeng", "name": "SQL"}
+    )
+    assert s.status_code == 201, s.text

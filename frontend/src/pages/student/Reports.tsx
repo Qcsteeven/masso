@@ -1,12 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { api } from "../../api/client";
-import { DOMAIN_LABEL, type MyReport } from "../../api/types";
+import { type MyReport } from "../../api/types";
 import { Page, PageHeader } from "../../components/Layout";
 import { Card, Chip, Empty, ErrorBanner, Loading, Table, fmtDateTime } from "../../components/ui";
 import { scoreTone } from "./Home";
+import { useDomainLabel } from "../../api/domains";
 
 export default function Reports() {
+  const domainLabel = useDomainLabel();
   const q = useQuery({ queryKey: ["reports-mine"], queryFn: () => api.get<MyReport[]>("/api/reports/mine") });
   return (
     <>
@@ -22,7 +24,7 @@ export default function Reports() {
                 {q.data.map((r) => (
                   <tr key={r.id}>
                     <td><Link to={`/student/reports/${r.session_id}`}>{r.title}</Link></td>
-                    <td>{DOMAIN_LABEL[r.domain] ?? r.domain}</td>
+                    <td>{domainLabel(r.domain)}</td>
                     <td className="font-mono">{fmtDateTime(r.created_at)}</td>
                     <td><Chip tone={r.passed ? "green" : "red"}>{r.passed ? "пройден" : "не пройден"}</Chip></td>
                     <td><Chip tone={scoreTone(r.score)}>{r.score ?? "—"}</Chip></td>

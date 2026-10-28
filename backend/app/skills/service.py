@@ -16,7 +16,9 @@ from app.errors import AppError, ErrorCode
 from app.profile_agent.algorithms import Edge, dependents_count, find_cycle, is_outdated
 from app.skills.models import Domain, Skill, SkillRequires, TrackTarget, UserSkill
 from app.skills.schemas import (
+    DomainCreate,
     DomainOut,
+    DomainPatch,
     EdgeOut,
     GraphOut,
     MySkillOut,
@@ -98,6 +100,43 @@ async def get_graph(db: AsyncSession, domain: str | None) -> GraphOut:
         ],
         acyclic=True,
     )
+
+
+async def list_domains(db: AsyncSession) -> list[DomainOut]:
+    counts = dict((await db.execute(select(Skill.domain_code, func.count()).group_by(Skill.domain_code))).all())
+    return [
+        DomainOut(code=d.code, name=d.name, description=d.description, skills_count=counts.get(d.code, 0))
+        for d in (await db.scalars(select(Domain).order_by(Domain.name))).all()
+    ]
+
+
+async def create_domain(db: AsyncSession, actor_id: uuid.UUID, body: DomainCreate) -> DomainOut:
+    if await db.get(Domain, body.code) is not None:
+        raise AppError(ErrorCode.VALIDATION_ERROR, "Домен с таким кодом уже существует.")
+    d = Domain(code=body.code, name=body.name, description=body.description)
+    db.add(d)
+    record_audit(
+        db, actor_id=actor_id, action="domain.create", object_type="domain", object_id=d.code, after=body.model_dump()
+    )
+    await db.commit()
+    return DomainOut(code=d.code, name=d.name, description=d.description)
+
+
+async def patch_domain(db: AsyncSession, actor_id: uuid.UUID, code: str, body: DomainPatch) -> DomainOut:
+    d = await db.get(Domain, code)
+    if d is None:
+        raise AppError(ErrorCode.NOT_FOUND, "Домен не найден.")
+    before = {"name": d.name, "description": d.description}
+    for k, v in body.model_dump(exclude_unset=True).items():
+        if v is not None:
+            setattr(d, k, v)
+    after = {"name": d.name, "description": d.description}
+    record_audit(
+        db, actor_id=actor_id, action="domain.update", object_type="domain", object_id=code, before=before, after=after
+    )
+    await db.commit()
+    count = await db.scalar(select(func.count()).select_from(Skill).where(Skill.domain_code == code))
+    return DomainOut(code=d.code, name=d.name, description=d.description, skills_count=count or 0)
 
 
 async def _domain_exists(db: AsyncSession, code: str) -> None:

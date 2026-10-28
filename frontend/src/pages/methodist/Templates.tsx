@@ -2,9 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { api } from "../../api/client";
-import { DOMAIN_LABEL, KIND_LABEL, type TemplateBrief, type TemplateFull } from "../../api/types";
+import { KIND_LABEL, type TemplateBrief, type TemplateFull } from "../../api/types";
 import { Page, PageHeader } from "../../components/Layout";
 import { Button, Card, Chip, Empty, ErrorBanner, FieldRow, Filter, Input, Loading, Select, Table, fmtDate, type Tone } from "../../components/ui";
+import { useDomainLabel, useDomains } from "../../api/domains";
 
 export const TPL_STATUS: Record<string, { label: string; tone: Tone }> = {
   draft: { label: "черновик", tone: "amber" },
@@ -13,6 +14,8 @@ export const TPL_STATUS: Record<string, { label: string; tone: Tone }> = {
 };
 
 export default function Templates() {
+  const domainLabel = useDomainLabel();
+  const domainList = useDomains();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [domain, setDomain] = useState("");
@@ -35,7 +38,7 @@ export default function Templates() {
           <Filter label="Направление">
             <Select value={domain} onChange={(e) => setDomain(e.target.value)}>
               <option value="">Все направления</option>
-              {Object.entries(DOMAIN_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              {(domainList.data ?? []).map((d) => <option key={d.code} value={d.code}>{d.name}</option>)}
             </Select>
           </Filter>
           <Button variant="primary" className="self-end" onClick={() => dlg.current?.showModal()}>+ Шаблон</Button>
@@ -49,7 +52,7 @@ export default function Templates() {
                 {q.data.map((t) => (
                   <tr key={t.id}>
                     <td><Link to={`/methodist/templates/${t.id}`} className="font-medium">{t.title}</Link><div className="font-mono text-xs text-muted">{t.code}</div></td>
-                    <td>{DOMAIN_LABEL[t.domain_code] ?? t.domain_code}</td>
+                    <td>{domainLabel(t.domain_code)}</td>
                     <td>{KIND_LABEL[t.kind]}</td>
                     <td>v{t.version}</td>
                     <td>{t.difficulty} из 5</td>

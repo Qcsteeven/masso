@@ -2,12 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { api } from "../../api/client";
-import { DOMAIN_LABEL, KIND_LABEL, PRIORITY_LABEL, type Assignment, type MyReport, type MySkill, type Recommendations, type SessionStatus } from "../../api/types";
+import { KIND_LABEL, PRIORITY_LABEL, type Assignment, type MyReport, type MySkill, type Recommendations, type SessionStatus } from "../../api/types";
 import { useAuth } from "../../auth/AuthContext";
 import { Page, PageHeader } from "../../components/Layout";
 import { Icon } from "../../components/icons";
 import { Banner, Bar, Button, Card, CardTitle, Chip, Empty, ErrorBanner, Kpi, Loading, Select, Table, type Tone } from "../../components/ui";
 import { useStartScenario } from "./useStartScenario";
+import { useDomainLabel } from "../../api/domains";
 
 const STATUS: Partial<Record<SessionStatus | "assigned", { label: string; tone: Tone }>> = {
   assigned: { label: "назначен", tone: "grey" },
@@ -32,6 +33,7 @@ const fmtDayMonth = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" }) : "—";
 
 export default function Home() {
+  const domainLabel = useDomainLabel();
   const { user } = useAuth();
   const navigate = useNavigate();
   const assignments = useQuery({ queryKey: ["assignments-me"], queryFn: () => api.get<Assignment[]>("/api/scenarios/assignments/me") });
@@ -60,7 +62,7 @@ export default function Home() {
 
   return (
     <>
-      <PageHeader title="Мои назначения" subtitle={`${user?.group_code ?? "Группа не указана"} · ${DOMAIN_LABEL[domain] ?? domain}`} />
+      <PageHeader title="Мои назначения" subtitle={`${user?.group_code ?? "Группа не указана"} · ${domainLabel(domain)}`} />
       <Page>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
           <Kpi label="Назначено" value={list.length} hint={nextDue ? `ближайший срок ${fmtDayMonth(nextDue)}` : "сроки не заданы"} />
@@ -89,7 +91,7 @@ export default function Home() {
                           <div className="font-semibold">{a.template.title}</div>
                           <div className="text-xs text-muted">лимит {a.template.time_limit_min} мин · подсказок до 3 · {KIND_LABEL[a.template.kind]}</div>
                         </td>
-                        <td><Chip tone="blue">{DOMAIN_LABEL[a.template.domain_code] ?? a.template.domain_code}</Chip></td>
+                        <td><Chip tone="blue">{domainLabel(a.template.domain_code)}</Chip></td>
                         <td className="font-mono">{fmtDayMonth(a.due_at)}</td>
                         <td>
                           <Chip tone={st === "completed" ? scoreTone(a.last_score) : STATUS[st]?.tone}>
@@ -117,7 +119,7 @@ export default function Home() {
             <CardTitle>Рекомендации</CardTitle>
             {domains.length > 1 && (
               <Select aria-label="Направление" value={domain} onChange={(e) => setDomain(e.target.value)}>
-                {domains.map((d) => <option key={d} value={d}>{DOMAIN_LABEL[d] ?? d}</option>)}
+                {domains.map((d) => <option key={d} value={d}>{domainLabel(d)}</option>)}
               </Select>
             )}
             {recs.isLoading ? <Loading /> : recs.error ? <ErrorBanner error={recs.error} /> : !recs.data?.deficits.length ? (

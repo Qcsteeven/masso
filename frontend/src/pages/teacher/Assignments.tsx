@@ -2,12 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSearchParams } from "react-router";
 import { api } from "../../api/client";
-import { DOMAIN_LABEL, KIND_LABEL, type Assignment, type TemplateBrief } from "../../api/types";
+import { KIND_LABEL, type Assignment, type TemplateBrief } from "../../api/types";
 import { Page, PageHeader } from "../../components/Layout";
 import { Banner, Button, Card, CardTitle, Chip, Empty, ErrorBanner, FieldRow, Input, Loading, Select, Table, fmtDate } from "../../components/ui";
 import { useGroups } from "./Group";
+import { useDomainLabel } from "../../api/domains";
 
 export default function Assignments() {
+  const domainLabel = useDomainLabel();
   const qc = useQueryClient();
   const [params] = useSearchParams();
   const groups = useGroups();
@@ -50,7 +52,7 @@ export default function Assignments() {
                   {list.data.map((a) => (
                     <tr key={a.id}>
                       <td className="font-medium">{a.template.title}</td>
-                      <td><Chip tone="blue">{DOMAIN_LABEL[a.template.domain_code] ?? a.template.domain_code}</Chip></td>
+                      <td><Chip tone="blue">{domainLabel(a.template.domain_code)}</Chip></td>
                       <td>{KIND_LABEL[a.template.kind]}</td>
                       <td className="font-mono">{fmtDate(a.due_at)}</td>
                       <td className="font-mono">{fmtDate(a.created_at)}</td>
