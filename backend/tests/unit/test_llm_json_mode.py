@@ -43,3 +43,11 @@ def test_factory_takes_json_mode_from_settings(monkeypatch: pytest.MonkeyPatch) 
     assert isinstance(ext, OpenAICompatProvider) and isinstance(loc, OpenAICompatProvider)
     assert ext.json_mode is False
     assert loc.json_mode is True
+
+
+def test_local_embeddings_are_opt_in() -> None:
+    """Ollama is an optional compose profile: with bge-m3 configured but no ollama container, every
+    generation waited ~8 s for the Docker DNS to fail on the name `ollama` before hash embeddings."""
+    from app.config import Settings
+
+    assert Settings(_env_file=None).llm_local_embed_model == ""  # type: ignore[call-arg]

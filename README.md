@@ -33,7 +33,34 @@ curl -s localhost/api/health     # "db":"ok", "worker": {...}
 
 **Защищённый режим (HTTPS) для эксплуатации.** `make up` — тестовый режим по HTTP, только для localhost или изолированной сети. В эксплуатации положите сертификат и ключ в `certs/fullchain.pem` и `certs/privkey.pem` (или задайте каталог в `TLS_CERT_DIR`) и запускайте `make up-tls`: nginx отдаёт HTTPS и WSS на 443 (TLS 1.2–1.3, HSTS), HTTP перенаправляется на HTTPS, cookie получает флаг Secure. Для проверки без настоящего сертификата: `make tls-selfsigned && make up-tls`, затем https://localhost (браузер предупредит о самоподписанном сертификате).
 
-**Локальная LLM (необязательно).** `docker compose --profile llm up -d ollama`, затем `docker compose exec ollama ollama pull <модель>` и в `.env`: `LLM_LOCAL_CHAT_MODEL=<модель>`, `LLM_GENERATION_MODE=local`, `make up`. Проверка провайдеров: `cd backend && uv run python ../scripts/llm_smoke.py external|local`.
+**Локальная LLM (необязательно).** `docker compose --profile llm up -d ollama`, затем `docker compose exec ollama ollama pull <модель>` и `… ollama pull bge-m3`; в `.env`: `LLM_LOCAL_CHAT_MODEL=<модель>`, `LLM_LOCAL_EMBED_MODEL=bge-m3`, `LLM_GENERATION_MODE=local`, затем `make up && make seed` (сид переносит непустые `LLM_*` из `.env` в настройки провайдеров).
+
+**GigaChat.** GigaChat не полностью OpenAI-совместим (OAuth-токен живёт 30 минут, сертификат НУЦ Минцифры, нет режима `json_object`), поэтому подключается через прокси [gpt2giga](https://github.com/ai-forever/gpt2giga) — сервис `gpt2giga` в `docker-compose.yml` (профиль `gigachat`, порт наружу не публикуется, backend обращается к нему во внутренней сети). Код LLM Gateway не меняется — всё задаётся в `.env`:
+
+```bash
+COMPOSE_PROFILES=gigachat                   # поднимать прокси вместе с системой
+GIGACHAT_CREDENTIALS=<ключ авторизации>     # из личного кабинета GigaChat API (developers.sber.ru)
+GIGACHAT_SCOPE=GIGACHAT_API_PERS            # GIGACHAT_API_B2B / _CORP — для юрлиц
+GIGACHAT_VERIFY_SSL_CERTS=False             # только тестовый режим (make up), см. ниже
+LLM_EXTERNAL_BASE_URL=http://gpt2giga:8090/v1
+LLM_EXTERNAL_API_KEY=<openssl rand -hex 24> # ключ доступа backend к прокси (прокси требует его в каждом запросе)
+LLM_EXTERNAL_CHAT_MODEL=GigaChat-2-Max      # или GigaChat-2, GigaChat-2-Pro
+LLM_EXTERNAL_JSON_MODE=false                # прокси отклоняет response_format=json_object; JSON просит промпт
+LLM_EXTERNAL_EMBED_MODEL=                   # эмбеддинги GigaChat платные; пусто — локальные хеш-эмбеддинги
+LLM_GENERATION_MODE=external
+```
+
+Затем `make up && make seed` и проверка из контейнера backend (имя `gpt2giga` есть только в сети compose): `docker compose exec -T backend python - external < scripts/llm_smoke.py` — печатает легенду, провайдер, токены и источник эмбеддингов. При недоступности GigaChat генерация уходит в шаблонный режим, активные сессии не прерываются.
+
+*Эксплуатация (HTTPS).* В `make up-tls` прокси проверяет сертификат GigaChat: `docker-compose.tls.yml` включает `GIGACHAT_VERIFY_SSL_CERTS=True` и берёт корневой сертификат НУЦ Минцифры из каталога сертификатов. Положите его туда один раз:
+
+```bash
+curl -fsS -o certs/russian_trusted_root_ca.pem https://gu-st.ru/content/lending/russian_trusted_root_ca_pem.crt
+openssl x509 -in certs/russian_trusted_root_ca.pem -noout -subject -fingerprint -sha256
+# subject=… CN = Russian Trusted Root CA; SHA256 D2:6D:2D:02:31:B7:C3:9F:92:CC:73:85:12:BA:54:10:35:19:E4:40:5D:68:B5:BD:70:3E:97:88:CA:8E:CF:31
+```
+
+Проверка TLS в самом backend не отключается ни в одном режиме.
 
 **Эксплуатация.**
 

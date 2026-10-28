@@ -61,7 +61,7 @@ sed -i "s/^JWT_SECRET=.*/JWT_SECRET=$(openssl rand -hex 32)/; s/^POSTGRES_PASSWO
 ```
 
 - **Без LLM.** Остальные строки `.env` можно не трогать: система переключится в шаблонный режим и будет работать на утверждённых вариантах сценариев.
-- **С LLM.** Впишите ключ и модель OpenAI-совместимого провайдера в `LLM_EXTERNAL_API_KEY` и `LLM_EXTERNAL_CHAT_MODEL`.
+- **С LLM.** Впишите ключ и модель OpenAI-совместимого провайдера в `LLM_EXTERNAL_API_KEY` и `LLM_EXTERNAL_CHAT_MODEL`. Для GigaChat — раздел 5б. Если LLM подключаете после первого `make seed`, выполните `make up && make seed`: сид перенесёт новые `LLM_*` в настройки провайдеров.
 - **Пароль базы задавайте до первого запуска.** База создаётся при первом `make up`. Если потом поменять `POSTGRES_PASSWORD`, backend не подключится — придётся пересоздать базу (раздел 7).
 
 ## 4. Сборка и запуск
@@ -119,6 +119,28 @@ make up-tls           # HTTPS на 443, HTTP перенаправляется н
 
 Откройте https://localhost — браузер предупредит о самоподписанном сертификате, это ожидаемо («Дополнительно» → «Перейти»). Терминал работает через WSS, cookie входа — с флагом Secure. Вернуться к обычному режиму: `make down && make up`.
 
+## 5б. GigaChat (если нужен реальный LLM)
+
+GigaChat подключается через прокси gpt2giga — он уже описан в `docker-compose.yml` (профиль `gigachat`) и сам обновляет OAuth-токен. Нужен ключ авторизации из личного кабинета GigaChat API (developers.sber.ru → проект GigaChat API → «Ключ авторизации»).
+
+1. Откройте `.env` в редакторе (`nano .env`) и задайте строки (ключ вписываете только вы, в репозиторий он не попадает):
+   ```ini
+   COMPOSE_PROFILES=gigachat
+   GIGACHAT_CREDENTIALS=<ключ авторизации>
+   GIGACHAT_SCOPE=GIGACHAT_API_PERS
+   GIGACHAT_VERIFY_SSL_CERTS=False
+   LLM_EXTERNAL_BASE_URL=http://gpt2giga:8090/v1
+   LLM_EXTERNAL_CHAT_MODEL=GigaChat-2-Max
+   LLM_EXTERNAL_JSON_MODE=false
+   LLM_EXTERNAL_EMBED_MODEL=
+   LLM_GENERATION_MODE=external
+   ```
+   Ключ доступа backend к прокси — любая случайная строка: `sed -i "s/^LLM_EXTERNAL_API_KEY=.*/LLM_EXTERNAL_API_KEY=$(openssl rand -hex 24)/" .env`.
+2. `make up && make seed`.
+3. Проверка: `docker compose exec -T backend python - external < scripts/llm_smoke.py` — должно напечатать «Провайдер: external», легенду, строку «Вызов external: ok=True, токены …» и «Эмбеддинги: hash, размерность 1024».
+
+`GIGACHAT_VERIFY_SSL_CERTS=False` допустим только в тестовом режиме. В защищённом режиме (`make up-tls`) проверка сертификата GigaChat включается автоматически — положите корневой сертификат НУЦ Минцифры в `certs/russian_trusted_root_ca.pem` (команда — README, раздел 1, «GigaChat»). Если GigaChat недоступен, генерация переходит на утверждённые варианты, начатые сессии продолжаются.
+
 ## 6. Остановка и повторный запуск
 
 ```bash
@@ -160,4 +182,4 @@ cd frontend && pnpm exec playwright install chromium && cd ..
 E2E_BASE_URL=http://localhost make e2e       # сквозные тесты в браузере по запущенной системе
 ```
 
-Проверка реального LLM, если ключ задан в `.env`: `cd backend && uv run python ../scripts/llm_smoke.py external`.
+Проверка реального LLM, если ключ задан в `.env`: `docker compose exec -T backend python - external < scripts/llm_smoke.py` (раздел 5б).

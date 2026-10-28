@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     llm_local_base_url: str = "http://ollama:11434/v1"
     llm_local_api_key: str = "ollama"
     llm_local_chat_model: str = ""
-    llm_local_embed_model: str = "bge-m3"
+    llm_local_embed_model: str = ""  # bge-m3 with the Ollama profile (README)
     llm_timeout_sec: float = 60.0
     # send response_format=json_object (false for providers that reject it, e.g. GigaChat via gpt2giga)
     llm_external_json_mode: bool = True
