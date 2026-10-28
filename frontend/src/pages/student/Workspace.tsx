@@ -9,6 +9,7 @@ import { Banner, Button, Card, CardTitle, Chip, ErrorBanner, Loading, Textarea, 
 import { AnswerFormCard, DocumentViewer, type Answers } from "./DocumentTrainer";
 import { Terminal } from "./Terminal";
 import { openSessionSocket } from "./ws";
+import { TheoryCard } from "../../components/Theory";
 
 const STATUS_CHIP: Record<string, { label: string; tone: Tone }> = {
   starting: { label: "запуск среды", tone: "blue" },
@@ -212,7 +213,8 @@ export default function Workspace() {
       </div>
 
       <div className="grid flex-1 grid-cols-1 gap-4 px-6 pb-6 pt-2 max-sm:px-3 lg:grid-cols-[minmax(240px,300px)_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_320px]">
-        <Card className="flex flex-col gap-4 self-start">
+        <div className="flex min-w-0 flex-col gap-4 self-start">
+        <Card className="flex flex-col gap-4">
           <CardTitle>Легенда</CardTitle>
           <p className="m-0 whitespace-pre-line text-[15px] leading-relaxed">{sc.legend}</p>
           <div>
@@ -237,6 +239,9 @@ export default function Workspace() {
             <p className="m-0 text-[13px] text-muted">{sc.constraints || "Пользователь без прав администратора · сеть отключена · запись только в рабочий каталог · лимиты профиля среды"}</p>
           </div>
         </Card>
+        <TheoryCard domain={sc.domain} codes={sc.skills ?? []} title="Теория"
+          intro="Справка по навыкам этого сценария. Читать можно в любой момент — баллы за неё не снимаются." />
+        </div>
 
         <div className="flex min-w-0 flex-col gap-4">
           {s.kind === "container" ? (

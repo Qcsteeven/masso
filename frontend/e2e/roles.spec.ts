@@ -32,6 +32,7 @@ test("a student sees the competency map and skill details", async ({ page }) => 
   await node.click();
   await expect(page.getByRole("heading", { level: 2, name: "Основы Linux" })).toBeVisible();
   await expect(page.getByText("Открывает")).toBeVisible();
+  await expect(page.getByText("Теория", { exact: true })).toBeVisible();
 });
 
 test("a student cannot open staff screens", async ({ page }) => {

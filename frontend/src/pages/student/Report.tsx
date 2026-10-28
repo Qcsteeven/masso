@@ -5,6 +5,7 @@ import type { ReportPayload, SkillChange } from "../../api/types";
 import { useAuth } from "../../auth/AuthContext";
 import { Page, PageHeader } from "../../components/Layout";
 import { Banner, Button, Card, CardTitle, Chip, ErrorBanner, Loading, Table, fmtDate, type Tone } from "../../components/ui";
+import { TheoryCard } from "../../components/Theory";
 
 function ScoreRing({ value, passed }: { value: number; passed: boolean }) {
   const r = 52;
@@ -128,6 +129,8 @@ export default function Report() {
                 return <div key={c.skill_id} className="flex items-center justify-between gap-3 text-sm"><span>{c.name}</span><Chip tone={ch.tone}>{ch.label}</Chip></div>;
               })}
             </Card>
+            <TheoryCard domain={r.domain} codes={r.skill_changes.filter((c) => !c.passed).map((c) => c.code)} title="Повторить теорию"
+              intro="Навыки, по которым проверки не пройдены. Разберите теорию перед следующей попыткой." />
             <Card className="flex flex-col gap-3">
               <CardTitle>Рекомендация</CardTitle>
               <p className="m-0 text-sm leading-relaxed">

@@ -183,6 +183,7 @@ class ScenarioPublic(BaseModel):
     criteria: list[str]
     constraints: str
     hints_max: int
+    skills: list[str] = []  # target skill codes: the student's theory for the scenario
     documents: list[DocumentPublic] = []
     defect_types: dict[str, str] = {}
     answer_form: dict[str, Any] = {}
@@ -207,6 +208,7 @@ def to_public(run_id: str, spec: ContainerSpec | DocumentSpec) -> ScenarioPublic
         criteria=[c.title for c in spec.checks],
         constraints=spec.constraints,
         hints_max=0 if spec.hints.policy == "none" else 3,
+        skills=[t.skill for t in spec.target_skills],
         documents=docs,
         defect_types=defect_types,
         answer_form=form,

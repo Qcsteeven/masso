@@ -27,6 +27,7 @@ async def test_generate_document_template_mode(
     assert data["status"] == "published" and data["generation_mode"] == "template"
     pub = (await client.get(f"/api/scenarios/runs/{data['run_id']}", headers=as_student)).json()["data"]
     assert pub["documents"] and pub["legend"] and pub["criteria"]
+    assert pub["skills"]  # target skill codes for the student's theory
     raw = json.dumps(pub, ensure_ascii=False)
     for word in HIDDEN:
         assert word not in raw, word

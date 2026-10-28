@@ -11,6 +11,7 @@ test("student fixes the web service in the browser terminal and sees the report"
   await row.getByRole("button", { name: /Начать|Пройти снова|Продолжить/ }).click();
   await expect(page).toHaveURL(/\/student\/sessions\//, { timeout: 180_000 });
   await expect(page.getByText("WebSocket подключён")).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("heading", { name: "Теория" })).toBeVisible(); // reference for the scenario's skills
 
   const term = page.locator(".xterm");
   await term.click();

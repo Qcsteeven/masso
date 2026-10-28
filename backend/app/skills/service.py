@@ -83,6 +83,7 @@ async def get_graph(db: AsyncSession, domain: str | None) -> GraphOut:
                 domain_code=s.domain_code,
                 name=s.name,
                 description=s.description,
+                theory=s.theory,
                 level_max=s.level_max,
                 status=s.status,
                 dependents=deps.get(s.id, 0),
@@ -128,6 +129,7 @@ async def create_skill(db: AsyncSession, actor_id: uuid.UUID, body: SkillCreate)
         domain_code=body.domain_code,
         name=body.name,
         description=body.description,
+        theory=body.theory,
         level_max=body.level_max,
         status=body.status,
         created_by=actor_id,
@@ -151,6 +153,7 @@ async def create_skill(db: AsyncSession, actor_id: uuid.UUID, body: SkillCreate)
         domain_code=skill.domain_code,
         name=skill.name,
         description=skill.description,
+        theory=skill.theory,
         level_max=skill.level_max,
         status=skill.status,
     )
@@ -162,6 +165,7 @@ async def patch_skill(db: AsyncSession, actor_id: uuid.UUID, skill_id: uuid.UUID
         raise AppError(ErrorCode.NOT_FOUND, "Навык не найден.")
     before = _skill_dict(skill)
     data = body.model_dump(exclude_unset=True, exclude={"requires"})
+    theory_changed = data.get("theory") is not None and data["theory"] != skill.theory
     if data.get("domain_code"):
         await _domain_exists(db, data["domain_code"])
     for k, v in data.items():
@@ -180,6 +184,7 @@ async def patch_skill(db: AsyncSession, actor_id: uuid.UUID, skill_id: uuid.UUID
         after={
             **_skill_dict(skill),
             **({"requires": [str(r.skill_id) for r in body.requires]} if body.requires is not None else {}),
+            **({"theory_changed": True} if theory_changed else {}),
         },
     )
     await db.commit()
@@ -190,6 +195,7 @@ async def patch_skill(db: AsyncSession, actor_id: uuid.UUID, skill_id: uuid.UUID
         domain_code=skill.domain_code,
         name=skill.name,
         description=skill.description,
+        theory=skill.theory,
         level_max=skill.level_max,
         status=skill.status,
         dependents=deps.get(skill.id, 0),
@@ -272,6 +278,7 @@ async def import_graph_data(
                 name=item["name"],
                 status=item.get("status", "active"),
                 description=item.get("description", ""),
+                theory=item.get("theory", ""),
                 level_max=int(item.get("level_max", 5)),
                 created_by=actor_id,
             )
@@ -281,9 +288,13 @@ async def import_graph_data(
             touched.add(code)
         else:
             if not replace:
+                # a repeated seed adds theory to skills that have none, never overwriting the methodist's text
+                if not s.theory and item.get("theory"):
+                    s.theory = item["theory"]
                 continue
             s.name, s.domain_code = item["name"], item["domain"]
             s.description = item.get("description", s.description)
+            s.theory = item.get("theory", s.theory)
             s.level_max = int(item.get("level_max", s.level_max))
             updated += 1
             touched.add(code)

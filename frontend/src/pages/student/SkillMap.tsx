@@ -12,6 +12,7 @@ import { useTheme } from "../../theme";
 import { layeredLayout } from "../methodist/layout";
 import { PRIORITY_TONE } from "./Home";
 import { STATE_LABEL, directionPercent, skillProgress, type SkillProgress, type SkillState } from "./skillProgress";
+import { TheoryList } from "../../components/Theory";
 
 // Student's competency map: the direction's REQUIRES graph coloured by the student's progress (ТЗ 4.3, Д-39).
 
@@ -185,6 +186,12 @@ export function SkillMap({ graph, skills, deficits, domain }: { graph: SkillGrap
                 {sp.required == null && <Chip>вне цели направления</Chip>}
               </div>
               {sel.description && <p className="m-0 text-sm leading-relaxed">{sel.description}</p>}
+              {sel.theory.trim() && (
+                <div className="flex flex-col gap-1.5 border-t border-line-soft pt-3">
+                  <div className="text-xs font-medium text-muted">Теория</div>
+                  <TheoryList skills={[sel]} openFirst />
+                </div>
+              )}
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between text-sm"><span className="text-muted">Уровень</span><b className="font-medium">{sp.level} из {sel.level_max}{sp.required != null ? ` · нужен ${sp.required}` : ""}</b></div>
                 <Levels level={sp.level} max={sel.level_max} required={sp.required} state={sp.state} />

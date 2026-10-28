@@ -18,6 +18,7 @@ class SkillOut(BaseModel):
     domain_code: str
     name: str
     description: str
+    theory: str = ""
     level_max: int
     status: str
     dependents: int = 0
@@ -55,6 +56,7 @@ class SkillCreate(BaseModel):
     domain_code: str
     name: str = Field(min_length=2, max_length=255)
     description: str = ""
+    theory: str = Field(default="", max_length=20000)  # Markdown
     level_max: int = Field(default=5, ge=1, le=10)
     status: SkillStatus = "draft"
     requires: list[RequiresIn] = []
@@ -63,6 +65,7 @@ class SkillCreate(BaseModel):
 class SkillPatch(BaseModel):
     name: str | None = Field(default=None, min_length=2, max_length=255)
     description: str | None = None
+    theory: str | None = Field(default=None, max_length=20000)
     level_max: int | None = Field(default=None, ge=1, le=10)
     status: SkillStatus | None = None
     domain_code: str | None = None

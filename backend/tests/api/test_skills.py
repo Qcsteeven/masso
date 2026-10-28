@@ -116,3 +116,38 @@ async def test_teacher_sees_own_group_only(
     ).json()["data"]
     r = await client.get("/api/skills/recommendations", params={"user_id": other["id"]}, headers=as_teacher)
     assert r.status_code == 403
+
+
+async def test_methodist_edits_theory_student_reads_it(
+    client: AsyncClient, graph: None, as_methodist: dict[str, str], as_student: dict[str, str], db: AsyncSession
+) -> None:
+    ids = await _ids(client, as_methodist)
+    theory = "## Процессы\n\nКоманда `ps` показывает процессы."
+    r = await client.patch(f"/api/skills/{ids['LNX.BASE']}", headers=as_methodist, json={"theory": theory})
+    assert r.status_code == 200, r.text
+    assert r.json()["data"]["theory"] == theory
+    g = (await client.get("/api/skills/graph", params={"domain": "devops"}, headers=as_student)).json()["data"]
+    assert next(s for s in g["skills"] if s["code"] == "LNX.BASE")["theory"] == theory
+    audit = (await db.scalars(select(AuditLog).where(AuditLog.action == "skill.update"))).all()
+    assert any((a.after or {}).get("theory_changed") for a in audit)
+    r = await client.patch(f"/api/skills/{ids['LNX.BASE']}", headers=as_student, json={"theory": "x"})
+    assert r.status_code == 403
+
+
+async def test_seed_import_fills_empty_theory_only(db: AsyncSession) -> None:
+    from app.skills.models import Skill
+
+    base = {"skills": [{"code": "TH.ONE", "domain": "devops", "name": "Тема", "theory": "из сида"}]}
+    await import_graph_data(db, base, actor_id=None, replace=False)
+    s = await db.scalar(select(Skill).where(Skill.code == "TH.ONE"))
+    assert s is not None and s.theory == "из сида"
+    s.theory = "правка методиста"
+    await import_graph_data(
+        db, {"skills": [{**base["skills"][0], "theory": "новый сид"}]}, actor_id=None, replace=False
+    )
+    assert s.theory == "правка методиста"
+    s.theory = ""
+    await import_graph_data(
+        db, {"skills": [{**base["skills"][0], "theory": "новый сид"}]}, actor_id=None, replace=False
+    )
+    assert s.theory == "новый сид"

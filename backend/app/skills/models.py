@@ -21,6 +21,8 @@ class Skill(UUIDPk, CreatedAt, Base):
     domain_code: Mapped[str] = mapped_column(ForeignKey("domains.code"), index=True)
     name: Mapped[str] = mapped_column(String(255))
     description: Mapped[str] = mapped_column(Text, default="")
+    # short theory in Markdown shown to students on the skill map, in the workspace and in the report (Д-40)
+    theory: Mapped[str] = mapped_column(Text, default="", server_default="")
     level_max: Mapped[int] = mapped_column(default=4)
     status: Mapped[str] = mapped_column(String(16), default="active")  # draft|active|deprecated|archived
     created_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))

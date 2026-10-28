@@ -12,6 +12,7 @@ import { Page, PageHeader } from "../../components/Layout";
 import { Banner, Button, Card, CardTitle, Chip, ErrorBanner, FieldRow, Input, Loading, Select, Textarea, cx } from "../../components/ui";
 import { layeredLayout } from "./layout";
 import { useTheme } from "../../theme";
+import { Markdown } from "../../components/Markdown";
 
 type SkillData = { skill: SkillNode; selected: boolean };
 
@@ -35,7 +36,7 @@ function SkillCard({ data }: NodeProps<Node<SkillData>>) {
 }
 const nodeTypes = { skill: SkillCard };
 
-interface Draft { id: string | null; code: string; name: string; description: string; domain_code: string; level_max: number; status: SkillStatus; requires: { skill_id: string; weight: number }[] }
+interface Draft { id: string | null; code: string; name: string; description: string; theory: string; domain_code: string; level_max: number; status: SkillStatus; requires: { skill_id: string; weight: number }[] }
 
 function GraphCanvas({ graph, domain, selected, onSelect, relayout }: { graph: Graph; domain: string; selected: string | null; onSelect: (id: string) => void; relayout: number }) {
   const [theme] = useTheme();
@@ -73,6 +74,23 @@ function GraphCanvas({ graph, domain, selected, onSelect, relayout }: { graph: G
         onNodeClick={(_, n) => onSelect(n.id)} nodesConnectable={false}>
         <Background gap={16} color="var(--color-field)" />
       </ReactFlow>
+    </div>
+  );
+}
+
+/** Theory for students (Markdown): shown on the skill map, in the workspace and in the report. */
+function TheoryField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [preview, setPreview] = useState(false);
+  return (
+    <div className="flex flex-col gap-2 border-t border-line-soft pt-3">
+      <div className="flex items-center justify-between gap-2">
+        <label htmlFor="skill-theory" className="text-xs font-medium text-muted">Теория (Markdown)</label>
+        <Button small variant="ghost" onClick={() => setPreview((p) => !p)}>{preview ? "Редактировать" : "Предпросмотр"}</Button>
+      </div>
+      {preview
+        ? <div className="max-h-80 overflow-auto rounded-xl bg-sunken p-3 text-sm">{value.trim() ? <Markdown source={value} /> : <span className="text-muted">Теория не заполнена.</span>}</div>
+        : <Textarea id="skill-theory" rows={8} className="font-mono text-xs" value={value} onChange={(e) => onChange(e.target.value)}
+            placeholder={"Кратко: что это, ключевые понятия, команды или признаки, типичные ошибки.\n#### Заголовок, - список, `код`, **важно**"} />}
     </div>
   );
 }
@@ -141,7 +159,7 @@ export default function SkillGraph() {
   };
   const save = useMutation({
     mutationFn: (d: Draft) => {
-      const body = { name: d.name, description: d.description, domain_code: d.domain_code, level_max: d.level_max, status: d.status, requires: d.requires };
+      const body = { name: d.name, description: d.description, theory: d.theory, domain_code: d.domain_code, level_max: d.level_max, status: d.status, requires: d.requires };
       return d.id ? api.patch<SkillNode>(`/api/skills/${d.id}`, body) : api.post<SkillNode>("/api/skills", { ...body, code: d.code });
     },
     onSuccess: (s) => { setSelected(s.id); setDraft((d) => d && { ...d, id: s.id }); qc.invalidateQueries({ queryKey: ["skill-graph"] }); },
@@ -150,7 +168,7 @@ export default function SkillGraph() {
     if (!g) return;
     const code = new Map(g.skills.map((s) => [s.id, s.code]));
     const data = {
-      skills: g.skills.map((s) => ({ code: s.code, domain: s.domain_code, name: s.name, description: s.description, level_max: s.level_max, status: s.status,
+      skills: g.skills.map((s) => ({ code: s.code, domain: s.domain_code, name: s.name, description: s.description, theory: s.theory, level_max: s.level_max, status: s.status,
         requires: g.edges.filter((e) => e.skill_id === s.id).map((e) => ({ code: code.get(e.requires_skill_id), weight: e.weight })) })),
       targets: g.targets.map((t) => ({ domain: t.domain_code, skill: code.get(t.skill_id), required_level: t.required_level })),
     };
@@ -172,7 +190,7 @@ export default function SkillGraph() {
         actions={<>
           <Button icon="upload" onClick={() => importDlg.current?.showModal()}>Импорт CSV / JSON</Button>
           <Button icon="download" onClick={exportJson}>Экспорт</Button>
-          <Button variant="primary" onClick={() => { setSelected(null); setDraft({ id: null, code: "", name: "", description: "", domain_code: domain, level_max: 5, status: "draft", requires: [] }); }}>+ Навык</Button>
+          <Button variant="primary" onClick={() => { setSelected(null); setDraft({ id: null, code: "", name: "", description: "", theory: "", domain_code: domain, level_max: 5, status: "draft", requires: [] }); }}>+ Навык</Button>
         </>} />
       <Page>
         <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[230px_minmax(0,1fr)_340px]">
@@ -219,6 +237,7 @@ export default function SkillGraph() {
                   {(id) => <Select id={id} value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value as SkillStatus })}>{Object.entries(SKILL_STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select>}
                 </FieldRow>
                 <FieldRow label="Описание" top>{(id) => <Textarea id={id} rows={2} value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />}</FieldRow>
+                <TheoryField value={draft.theory} onChange={(theory) => setDraft({ ...draft, theory })} />
                 <div className="border-t border-line-soft pt-3 text-xs font-semibold text-muted">Требует (requires)</div>
                 {draft.requires.map((r, i) => (
                   <div key={r.skill_id} className="grid grid-cols-[minmax(0,1fr)_76px_40px] items-center gap-2 text-sm">

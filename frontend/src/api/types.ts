@@ -51,6 +51,7 @@ export interface ScenarioPublic {
   criteria: string[];
   constraints: string;
   hints_max: number;
+  skills: string[];
   documents: DocumentPublic[];
   defect_types: Record<string, string>;
   answer_form: AnswerForm | Record<string, never>;
@@ -243,7 +244,7 @@ export const REVIEW_LABEL: Record<ReviewStatus, string> = { pending: "ожида
 export const REVIEW_TONE = { pending: "amber", confirmed: "green", corrected: "blue" } as const;
 
 export type SkillStatus = "draft" | "active" | "deprecated" | "archived";
-export interface SkillNode { id: string; code: string; domain_code: string; name: string; description: string; level_max: number; status: SkillStatus; dependents: number }
+export interface SkillNode { id: string; code: string; domain_code: string; name: string; description: string; theory: string; level_max: number; status: SkillStatus; dependents: number }
 export interface SkillGraph {
   domains: { code: string; name: string; description: string; skills_count: number }[];
   skills: SkillNode[];
