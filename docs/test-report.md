@@ -112,6 +112,22 @@ python scripts/loadtest.py # нагрузка, система поднята (ma
 
 **Проверить на стенде (Linux-ВМ):** `make up` и `make sandbox-image` с репозиторными Dockerfile (в облаке недоступны Debian-зеркала и ghcr.io), вход через браузер с другой машины по адресу ВМ.
 
+## Защищённый режим (HTTPS)
+
+28.10.2026, облачный стенд, самоподписанный сертификат (`make tls-selfsigned && make up-tls`), `make check-tls` (`scripts/check_tls.sh`) и браузер:
+
+| Проверка | Результат |
+|---|---|
+| `http://localhost/student`, `http://localhost/api/health` | 301 → `https://…` (по HTTP ничего не отдаётся) |
+| API по HTTPS | `/api/health` → `db: ok` |
+| Версии TLS | TLS 1.3 (`TLS_AES_256_GCM_SHA384`) и TLS 1.2 принимаются, TLS 1.1 отклоняется |
+| Заголовки | `Strict-Transport-Security: max-age=31536000`, `X-Frame-Options: DENY` |
+| Refresh-cookie | `HttpOnly; Secure; SameSite=strict; Path=/api/auth` |
+| Терминал и события в браузере | `wss://localhost/ws/sessions/…/terminal` и `…/events`, команда в терминале выполнена |
+| Возврат в тестовый режим (`make up`) | HTTP 200, порт 443 закрыт, в журнале backend предупреждение `COOKIE_SECURE=false` |
+
+**Проверить на стенде:** HTTPS с настоящим сертификатом для доменного имени сервера.
+
 ## Примечания
 
 1. **Образ песочницы в облачном прогоне.** Прокси облачного контейнера блокирует `deb.debian.org`, поэтому репозиторный `sandbox-images/webstack/Dockerfile` (Debian bookworm, PostgreSQL 15) собрать в облаке нельзя. Для прогона использована временная копия Dockerfile вне репозитория с отличиями только в базе: `ubuntu:24.04`, `postgresql-16` с символической ссылкой `/usr/lib/postgresql/15 → 16`, удалён штатный пользователь `ubuntu` (uid 1000). Скрипты, конфигурации, флаги безопасности и сценарии — те же. **Проверить на стенде**: `make sandbox-image && make test-integration` с репозиторным Dockerfile.

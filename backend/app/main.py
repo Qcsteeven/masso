@@ -43,6 +43,8 @@ def create_app() -> FastAPI:
     settings = get_settings()
     setup_logging()
     prod = settings.app_env == "prod"
+    if prod and not settings.cookie_secure:
+        log.warning("COOKIE_SECURE=false: test mode over plain HTTP; for operation run with HTTPS (make up-tls)")
     if settings.jwt_secret_generated:
         log.warning("JWT_SECRET is missing or a sample value: a random secret is used until restart; set it in .env")
     app = FastAPI(

@@ -31,6 +31,8 @@ curl -s localhost/api/health     # "db":"ok", "worker": {...}
 
 Если `make seed` сразу после `make up` пишет об отсутствии таблиц — backend ещё применяет миграции, повторите через 10 с.
 
+**Защищённый режим (HTTPS) для эксплуатации.** `make up` — тестовый режим по HTTP, только для localhost или изолированной сети. В эксплуатации положите сертификат и ключ в `certs/fullchain.pem` и `certs/privkey.pem` (или задайте каталог в `TLS_CERT_DIR`) и запускайте `make up-tls`: nginx отдаёт HTTPS и WSS на 443 (TLS 1.2–1.3, HSTS), HTTP перенаправляется на HTTPS, cookie получает флаг Secure. Для проверки без настоящего сертификата: `make tls-selfsigned && make up-tls`, затем https://localhost (браузер предупредит о самоподписанном сертификате).
+
 **Локальная LLM (необязательно).** `docker compose --profile llm up -d ollama`, затем `docker compose exec ollama ollama pull <модель>` и в `.env`: `LLM_LOCAL_CHAT_MODEL=<модель>`, `LLM_GENERATION_MODE=local`, `make up`. Проверка провайдеров: `cd backend && uv run python ../scripts/llm_smoke.py external|local`.
 
 **Эксплуатация.**

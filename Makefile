@@ -5,10 +5,22 @@ BACK := cd backend &&
 FRONT := cd frontend &&
 TEST_DATABASE_URL ?= postgresql+asyncpg://masso:masso@localhost:5433/masso_test
 
-.PHONY: up down logs migrate seed sandbox-image dev-db dev-back dev-front test test-back test-front test-integration lint typecheck check e2e fmt
+TLS := -f docker-compose.yml -f docker-compose.tls.yml
+
+.PHONY: up up-tls tls-selfsigned check-tls down logs migrate seed sandbox-image dev-db dev-back dev-front test test-back test-front test-integration lint typecheck check e2e fmt
 
 up:            ## собрать и поднять систему (http://localhost)
 	$(COMPOSE) up -d --build
+
+up-tls:        ## эксплуатационный режим: HTTPS/WSS на 443, редирект с 80 (сертификат в ./certs)
+	$(COMPOSE) $(TLS) up -d --build
+
+tls-selfsigned: ## самоподписанный сертификат в ./certs для проверки HTTPS-режима (не для эксплуатации)
+	mkdir -p certs && openssl req -x509 -newkey rsa:2048 -nodes -days 365 -subj "/CN=localhost" \
+	  -addext "subjectAltName=DNS:localhost,IP:127.0.0.1" -keyout certs/privkey.pem -out certs/fullchain.pem
+
+check-tls:     ## проверка HTTPS-режима: редирект, TLS 1.2/1.3, HSTS, Secure-cookie
+	scripts/check_tls.sh
 
 down:
 	$(COMPOSE) down

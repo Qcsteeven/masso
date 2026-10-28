@@ -1,0 +1,13 @@
+# Operation mode with HTTPS (ТЗ 4.9): make up-tls, or
+#   docker compose -f docker-compose.yml -f docker-compose.tls.yml up -d --build
+# Certificates: ${TLS_CERT_DIR:-./certs}/fullchain.pem and privkey.pem (make tls-selfsigned for a test certificate).
+services:
+  frontend:
+    ports:
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./frontend/nginx/https.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${TLS_CERT_DIR:-./certs}:/etc/nginx/certs:ro
+  backend:
+    environment:
+      COOKIE_SECURE: "true"
