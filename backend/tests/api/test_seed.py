@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -44,3 +46,25 @@ async def test_seed_syncs_llm_providers_from_env(db: AsyncSession, monkeypatch: 
     )
     assert local.chat_model == "qwen3:8b"
     assert await db.scalar(select(func.count()).select_from(LLMProvider)) == 3
+
+
+async def test_seed_upgrades_template_with_a_higher_version(db: AsyncSession, tmp_path: Path) -> None:
+    import json
+
+    from app.scenarios.models import ScenarioTemplate
+    from app.scenarios.seed import seed_templates
+    from app.skills.service import import_graph_data
+
+    seed_dir = Path(__file__).parents[2] / "seed"
+    await import_graph_data(db, json.loads((seed_dir / "skills.json").read_text("utf-8")), actor_id=None, replace=False)
+    src = json.loads((seed_dir / "templates" / "web_recovery.json").read_text("utf-8"))
+    (tmp_path / "t.json").write_text(json.dumps({**src, "version": 1, "title": "Старый"}), "utf-8")
+    await seed_templates(db, tmp_path)
+    t = await db.scalar(select(ScenarioTemplate).where(ScenarioTemplate.code == src["code"]))
+    assert t is not None and t.title == "Старый"
+    (tmp_path / "t.json").write_text(json.dumps({**src, "version": 2}), "utf-8")
+    await seed_templates(db, tmp_path)
+    assert (t.version, t.title) == (2, src["title"]) and t.spec["incidents_pick"] == src["incidents_pick"]
+    t.version, t.title = 5, "Правка методиста"  # a methodist's edit bumps the version: the seed keeps it
+    await seed_templates(db, tmp_path)
+    assert t.title == "Правка методиста"

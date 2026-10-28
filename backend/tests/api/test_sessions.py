@@ -96,3 +96,31 @@ async def test_ws_events_auth_and_push(
         await jobs.incidents_job(now_utc() + timedelta(minutes=6))
         msg = json.loads(await ws.recv())
         assert msg["type"] == "incident" and "регламент" in msg["payload"]["message"]
+
+
+async def test_self_check_shows_criteria_without_penalty(
+    client: AsyncClient, seeded: None, as_student: dict[str, str], db: AsyncSession
+) -> None:
+    from app.events.models import EnvironmentEvent
+
+    s = await _start_doc(client, as_student, "audit.invoice_reconciliation")
+    r = await client.post(f"/api/sessions/{s['id']}/self-check", headers=as_student)
+    assert r.status_code == 200, r.text
+    data = r.json()["data"]
+    assert [c["title"] for c in data["results"]] == s["scenario"]["criteria"]
+    assert all(set(c) == {"title", "passed", "skipped"} for c in data["results"])  # no check details or params
+    assert data["passed"] < data["total"] and data["retry_after_sec"] == 30
+    # throttled: one self-check per 30 s
+    again = await client.post(f"/api/sessions/{s['id']}/self-check", headers=as_student)
+    assert again.status_code == 422 and again.json()["error"]["code"] == "VALIDATION_ERROR"
+    ev = (
+        await db.scalars(
+            select(EnvironmentEvent).where(EnvironmentEvent.session_id == s["id"], EnvironmentEvent.type == "check")
+        )
+    ).all()
+    assert len(ev) == 1 and ev[0].payload["self_check"] is True
+    other = await login(client, "petrova.md@masso.local")
+    assert (await client.post(f"/api/sessions/{s['id']}/self-check", headers=other)).status_code == 403
+    # submit still scores from scratch: the self-check costs nothing
+    rep = (await client.post(f"/api/sessions/{s['id']}/submit", headers=as_student)).json()["data"]
+    assert rep["score"]["hints"] == 0 and rep["score"]["violations"] == 0

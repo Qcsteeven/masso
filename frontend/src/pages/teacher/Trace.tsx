@@ -26,7 +26,9 @@ function describe(e: TraceEvent): React.ReactNode {
   switch (e.type) {
     case "command": return <Code>{String(p.cmd ?? "")}</Code>;
     case "hint": return <>Подсказка {String(p.number)} из 3 выдана (−{String(p.penalty_percent ?? 10)} %): {String(p.text ?? "")}</>;
-    case "check": return <>{String(p.title)} — {p.skipped ? "не применялась" : p.passed ? "пройдена" : "не пройдена"}</>;
+    case "check":
+      if (p.self_check) return <>Самопроверка студента: выполнено {String(p.passed)} из {String(p.total)} критериев</>;
+      return <>{String(p.title)} — {p.skipped ? "не применялась" : p.passed ? "пройдена" : "не пройдена"}</>;
     case "answer": return <>Ответ сохранён{p.findings != null ? `: несоответствий ${String(p.findings)}` : ""}</>;
     case "security": return <>{String(p.message ?? "Нарушение политики среды")} {p.cmd ? <Code>{String(p.cmd)}</Code> : null}</>;
     default: return String(p.message ?? "");

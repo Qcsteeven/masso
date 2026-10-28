@@ -11,11 +11,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.audit.models import SecurityEvent
 from app.events.models import EnvironmentEvent
 from app.sandbox.manager import SandboxManager
+from app.scenarios.models import ScenarioRun
+from app.scenarios.spec import parse_spec
 from app.sessions import jobs
 from app.sessions.models import LearningSession
 from app.sessions.service import now_utc
 
 pytestmark = [pytest.mark.docker, pytest.mark.db]
+
+
+# a command that succeeds only when the incident's fault is in place
+INCIDENT_PROBE = {
+    "nginx_wrong_upstream": "grep -q 'server 127.0.0.1:8001;' /srv/nginx/store.conf",
+    "app_port_changed": "grep -q '^APP_PORT=8002' /srv/app/.env",
+    "db_stopped": "supervisorctl status postgresql | grep -q STOPPED",
+    "nginx_syntax": "grep -q 'proxy_read_timeout 10s$' /srv/nginx/store.conf",
+}
 
 
 async def _session(client: AsyncClient, headers: dict[str, str]) -> dict:
@@ -73,15 +84,16 @@ async def test_terminal_commands_incident_cleanup(
     sec = (await db.scalars(select(SecurityEvent).where(SecurityEvent.session_id == row.id))).all()
     assert {e.kind for e in sec} == kinds
     # incident at due time breaks the proxy; the event is stored for the digital footprint and WS
+    # the variant's first incident (random from the pool) is applied at its due time
+    spec = parse_spec((await db.get(ScenarioRun, row.run_id)).generated_spec)
+    first = spec.incidents[0]
     await jobs.incidents_job(now_utc() + timedelta(minutes=6))
-    conf = await real_sandbox.exec(cid, "grep -c 'server 127.0.0.1:8001;' /srv/nginx/store.conf")
-    assert conf.output.strip() == "1"
-    await db.refresh(row)
-    assert row.incident_applied_at is not None
+    applied = await real_sandbox.exec(cid, INCIDENT_PROBE[first.fault or ""])
+    assert applied.ok, (first.id, applied.output)
     inc = await db.scalars(
         select(EnvironmentEvent).where(EnvironmentEvent.session_id == row.id, EnvironmentEvent.type == "incident")
     )
-    assert inc.first() is not None
+    assert [e.payload["id"] for e in inc.all()] == [first.id]
 
 
 async def test_foreign_student_cannot_open_terminal(

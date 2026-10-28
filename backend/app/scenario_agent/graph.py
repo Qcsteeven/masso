@@ -97,6 +97,14 @@ class ScenarioAgent:
         chosen: dict[str, Any] = {"params": params}
         if base["kind"] == "container":
             chosen["initial_fault"] = rng.choice(base["faults"]["initial"])
+            pick = base.get("incidents_pick")
+            if pick and base.get("incidents"):
+                # incident pool: a random subset in random order; dynamic validation runs each chosen incident
+                base["incidents"] = rng.sample(
+                    base["incidents"], rng.randint(pick[0], min(pick[1], len(base["incidents"])))
+                )
+                chosen["incidents"] = [i["id"] for i in base["incidents"]]
+                base["incidents_pick"] = None  # the variant has a fixed list
         elif base.get("builder"):
             gen = GENERATORS[base["builder"]](rng)
             params.update(gen.params)

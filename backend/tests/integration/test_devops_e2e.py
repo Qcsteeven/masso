@@ -27,10 +27,15 @@ async def test_devops_full_cycle(
     spec = parse_spec((await db.get(ScenarioRun, row.run_id)).generated_spec)
     assert isinstance(spec, ContainerSpec)
     cid = row.sandbox_container_id
-    # the student fixes the initial fault, then the incident arrives and is fixed too
+    # self-check before the fix: the shop is down
+    before = (await client.post(f"/api/sessions/{s['id']}/self-check", headers=as_student)).json()["data"]
+    assert not next(c for c in before["results"] if c["title"].startswith("Магазин"))["passed"]
+    # the student fixes the initial fault, then each incident of the variant (1–2 from the pool) arrives and is fixed
     await real_sandbox.exec(cid, spec.faults.catalog[spec.chosen["initial_fault"]].fix)
-    await jobs.incidents_job(now_utc() + timedelta(minutes=6))
-    await real_sandbox.exec(cid, spec.faults.catalog["nginx_wrong_upstream"].fix)
+    assert 1 <= len(spec.incidents) <= 2
+    for k, inc in enumerate(spec.incidents):
+        await jobs.incidents_job(now_utc() + timedelta(minutes=6 * (k + 1)))
+        await real_sandbox.exec(cid, spec.faults.catalog[inc.fault or ""].fix)
     await real_sandbox.wait_ready(cid, 20)
     t0 = time.monotonic()
     r = await client.post(f"/api/sessions/{s['id']}/submit", headers=as_student)
@@ -40,7 +45,7 @@ async def test_devops_full_cycle(
     assert res["score"]["final"] == 100, res
     assert not await real_sandbox.list_by_label(f"masso.session={s['id']}")  # cleaned up within the request
     rep = (await client.get(f"/api/reports/{res['report_id']}", headers=as_student)).json()["data"]
-    assert rep["incidents"] and rep["score"]["passed"]
+    assert len(rep["incidents"]) == len(spec.incidents) and rep["score"]["passed"]
 
 
 async def test_devops_unfixed_fails(

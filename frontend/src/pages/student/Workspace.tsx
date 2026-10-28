@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
-import { api } from "../../api/client";
+import { ApiError, api } from "../../api/client";
 import { DOMAIN_LABEL, type AnswerForm, type HintOut, type ScenarioPublic, type SessionEvent, type SessionView, type SubmitOut } from "../../api/types";
 import { Icon, type IconName } from "../../components/icons";
 import { ThemeToggle } from "../../components/Layout";
@@ -54,7 +54,9 @@ function useSessionEvents(sessionId: string, enabled: boolean, onEvent: (e: Sess
         ws.onopen = () => setConnected(true);
         ws.onmessage = (m) => {
           try {
-            const e = JSON.parse(String(m.data)) as SessionEvent;
+            const raw = JSON.parse(String(m.data)) as Omit<SessionEvent, "type"> & { type: string };
+            // the server names live check events check_status
+            const e = { ...raw, type: raw.type === "check_status" ? "check" : raw.type } as SessionEvent;
             if (e.type !== "ping") cb.current(e);
           } catch { /* ignore malformed */ }
         };
@@ -72,7 +74,7 @@ const EVENT_VIEW: Record<string, { icon: IconName; title: (p: Record<string, unk
   incident: { icon: "alert", title: () => "Инцидент", tone: "text-amber-ink" },
   security: { icon: "shield", title: () => "Ограничение среды", tone: "text-red-ink" },
   warning: { icon: "alert", title: () => "Предупреждение", tone: "text-amber-ink" },
-  check: { icon: "check", title: (p) => (p.passed ? "Проверка пройдена" : "Проверка не пройдена"), tone: "text-green" },
+  check: { icon: "check", title: (p) => (p.self_check ? `Самопроверка: ${String(p.passed)} из ${String(p.total)}` : p.passed ? "Проверка пройдена" : "Проверка не пройдена"), tone: "text-green" },
   status: { icon: "check", title: (p) => STATUS_TITLE[String(p.status)] ?? "Статус сессии", tone: "text-green" },
 };
 const STATUS_TITLE: Record<string, string> = {
@@ -82,10 +84,12 @@ const STATUS_TITLE: Record<string, string> = {
 
 const isForm = (f: ScenarioPublic["answer_form"]): f is AnswerForm => "type" in f;
 
+interface SelfCheck { results: { title: string; passed: boolean; skipped: boolean }[]; passed: number; total: number; retry_after_sec: number; at: string }
+
 function eventText(e: SessionEvent): string {
   const p = e.payload;
   if (e.type === "hint") return String(p.text ?? "");
-  if (e.type === "check") return String(p.title ?? "");
+  if (e.type === "check") return p.self_check ? "Баллы не снимаются." : String(p.title ?? "");
   return String(p.message ?? "");
 }
 
@@ -147,6 +151,22 @@ export default function Workspace() {
     mutationFn: () => api.post<HintOut>(`/api/sessions/${id}/hints`, { question }),
     onSuccess: () => { setQuestion(""); setAskOpen(false); qc.invalidateQueries({ queryKey: ["session", id] }); },
   });
+  const [lastSelf, setLastSelf] = useState<SelfCheck | null>(null);
+  const [cooldownUntil, setCooldownUntil] = useState(0);
+  const [tick, setTick] = useState(Date.now());
+  useEffect(() => {
+    if (cooldownUntil <= Date.now()) return;
+    const t = setInterval(() => setTick(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [cooldownUntil]);
+  const selfCheck = useMutation({
+    mutationFn: () => api.post<SelfCheck>(`/api/sessions/${id}/self-check`),
+    onSuccess: (r) => { const now = Date.now(); setLastSelf({ ...r, at: new Date(now).toISOString() }); setTick(now); setCooldownUntil(now + r.retry_after_sec * 1000); },
+    onError: (err) => {
+      const wait = err instanceof ApiError ? Number(err.details?.retry_after_sec) : NaN;
+      if (Number.isFinite(wait)) { const now = Date.now(); setTick(now); setCooldownUntil(now + wait * 1000); }
+    },
+  });
   const pause = useMutation({
     mutationFn: () => api.post(`/api/sessions/${id}/${s?.status === "paused" ? "resume" : "pause"}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["session", id] }),
@@ -170,6 +190,9 @@ export default function Workspace() {
   const st = STATUS_CHIP[s.status] ?? { label: s.status, tone: "grey" as Tone };
   const finished = !live && s.status !== "starting";
   const log = events.filter((e) => e.type !== "answer").slice().reverse();
+  const lastSelfEvent = log.find((e) => e.type === "check" && e.payload.self_check);
+  const selfResult: SelfCheck | null = lastSelf ?? (lastSelfEvent ? { ...(lastSelfEvent.payload as unknown as SelfCheck), at: lastSelfEvent.created_at ?? new Date().toISOString() } : null);
+  const cooldownLeft = Math.max(0, Math.ceil((cooldownUntil - tick) / 1000));
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -221,18 +244,34 @@ export default function Workspace() {
             <div className="mb-2 text-xs font-medium text-muted">Критерии оценивания</div>
             <ul className="m-0 flex list-none flex-col gap-2 p-0">
               {sc.criteria.map((c) => {
-                const res = [...events].reverse().find((e) => e.type === "check" && e.payload.title === c);
+                const final = [...events].reverse().find((e) => e.type === "check" && !e.payload.self_check && e.payload.title === c);
+                const mid = selfResult?.results.find((r) => r.title === c);
+                const res = final ? { passed: !!final.payload.passed, skipped: !!final.payload.skipped } : mid;
                 return (
-                  <li key={c} className="flex items-start gap-2 text-sm">
-                    <span aria-hidden className={cx("mt-0.5 grid size-4 shrink-0 place-items-center rounded border",
-                      res ? (res.payload.passed ? "border-green bg-green text-white" : "border-red bg-red text-white") : "border-label")}>
-                      {res && <Icon name={res.payload.passed ? "check" : "x"} size={12} />}
+                  <li key={c} className="flex items-start gap-2 text-sm" title={res?.skipped ? "Проверка включится после инцидента" : undefined}>
+                    <span aria-hidden className={cx("mt-0.5 grid size-4 shrink-0 place-items-center rounded border transition-colors",
+                      !res ? "border-label" : res.skipped ? "border-field bg-sunken text-muted" : res.passed ? "border-green bg-green text-white" : "border-red bg-red text-white")}>
+                      {res && <Icon name={res.skipped ? "clock" : res.passed ? "check" : "x"} size={12} />}
                     </span>
                     {c}
                   </li>
                 );
               })}
             </ul>
+            {live && (
+              <div className="mt-3 flex flex-col gap-1.5">
+                <Button small icon="check" loading={selfCheck.isPending} disabled={s.status !== "active" || cooldownLeft > 0} onClick={() => selfCheck.mutate()}>
+                  {cooldownLeft > 0 ? `Проверить снова через ${cooldownLeft} с` : "Проверить выполнение"}
+                </Button>
+                <span className="text-xs text-muted" role="status">
+                  {selfResult
+                    ? `Проверено в ${fmtTime(selfResult.at)}: выполнено ${selfResult.passed} из ${selfResult.total}. Баллы не снимаются.`
+                    : "Промежуточная проверка критериев, баллы не снимаются. Итог считается при отправке."}
+                </span>
+              </div>
+            )}
+            {!live && !finished && <ErrorBanner error={selfCheck.error} />}
+            {live && <ErrorBanner error={selfCheck.error && !(selfCheck.error instanceof ApiError && selfCheck.error.details?.retry_after_sec) ? selfCheck.error : null} />}
           </div>
           <div className="border-t border-line-soft pt-3">
             <div className="mb-1.5 text-xs font-medium text-muted">Ограничения среды</div>

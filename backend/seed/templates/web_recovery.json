@@ -1,7 +1,7 @@
 {
   "kind": "container",
   "code": "devops.web_recovery",
-  "version": 1,
+  "version": 2,
   "domain": "devops",
   "title": "Восстановление веб-сервиса после сбоя",
   "target_skills": [
@@ -35,13 +35,35 @@
         "description": "Прокси передаёт запросы на неверный порт",
         "apply": "sed -i 's/server 127.0.0.1:8000;/server 127.0.0.1:8001;/' /srv/nginx/store.conf && supervisorctl restart nginx; true",
         "fix": "sed -i 's/server 127.0.0.1:8001;/server 127.0.0.1:8000;/' /srv/nginx/store.conf && supervisorctl restart nginx; true"
+      },
+      "app_port_changed": {
+        "description": "Приложение запущено на другом порту (APP_PORT в /srv/app/.env)",
+        "apply": "sed -i 's/^APP_PORT=.*/APP_PORT=8002/' /srv/app/.env && supervisorctl restart store-api; true",
+        "fix": "sed -i 's/^APP_PORT=.*/APP_PORT=8000/' /srv/app/.env && supervisorctl restart store-api; true"
+      },
+      "db_stopped": {
+        "description": "Служба PostgreSQL остановлена",
+        "apply": "supervisorctl stop postgresql; true",
+        "fix": "supervisorctl start postgresql; sleep 2; true"
+      },
+      "nginx_syntax": {
+        "description": "Синтаксическая ошибка в конфигурации прокси, nginx не запускается",
+        "apply": "sed -i 's/proxy_read_timeout 10s;/proxy_read_timeout 10s/' /srv/nginx/store.conf && supervisorctl restart nginx; true",
+        "fix": "sed -i 's/proxy_read_timeout 10s$/proxy_read_timeout 10s;/' /srv/nginx/store.conf && supervisorctl restart nginx; true"
       }
     }
   },
   "incidents": [
     {"id": "inc_502", "after_min": [2, 5], "fault": "nginx_wrong_upstream",
-     "message": "Покупатели снова видят 502 Bad Gateway. Дежурный только что «оптимизировал» конфигурацию прокси."}
+     "message": "Покупатели снова видят 502 Bad Gateway. Дежурный только что «оптимизировал» конфигурацию прокси."},
+    {"id": "inc_app_port", "after_min": [2, 5], "fault": "app_port_changed",
+     "message": "Магазин снова отдаёт 502 Bad Gateway. Разработчик только что выкатил «небольшую правку настроек» приложения."},
+    {"id": "inc_db_stopped", "after_min": [2, 5], "fault": "db_stopped",
+     "message": "Страницы магазина отвечают ошибкой 503, в журнале приложения — «database unavailable». Ночью проводили обслуживание СУБД."},
+    {"id": "inc_nginx_syntax", "after_min": [2, 5], "fault": "nginx_syntax",
+     "message": "Магазин перестал открываться совсем. Коллега поправил таймауты прокси и перезапустил его, не проверив конфигурацию."}
   ],
+  "incidents_pick": [1, 2],
   "checks": [
     {"id": "health", "title": "Магазин отвечает HTTP 200 через прокси", "type": "http_health", "weight": 40, "critical": true,
      "params": {"url": "http://127.0.0.1:8080/health", "status": 200}},
@@ -57,7 +79,7 @@
   "hints": {"policy": "limited_3", "ladder": [
     "Начните с того, какие службы на сервере не в состоянии RUNNING, и прочитайте их журналы.",
     "Сравните параметры подключения приложения к базе данных с эталонными значениями из документации сервера.",
-    "Когда приложение заработает, проверьте магазин именно через прокси и выясните, куда прокси передаёт запросы."
+    "Когда приложение заработает, проверьте магазин так, как его видит покупатель, — через прокси — и пройдите цепочку прокси → приложение → база данных."
   ]},
   "success": {"threshold": 75},
   "constraints": "Пользователь без прав администратора · сеть отключена · изменять можно только файлы в /srv · лимиты профиля small",

@@ -12,6 +12,10 @@ test("student fixes the web service in the browser terminal and sees the report"
   await expect(page).toHaveURL(/\/student\/sessions\//, { timeout: 180_000 });
   await expect(page.getByText("WebSocket подключён")).toBeVisible({ timeout: 60_000 });
   await expect(page.getByRole("heading", { name: "Теория" })).toBeVisible(); // reference for the scenario's skills
+  // mid-session self-check: criteria get marks, no penalty
+  await page.getByRole("button", { name: "Проверить выполнение" }).click();
+  await expect(page.getByRole("status").filter({ hasText: /Проверено в .*: выполнено \d из 5/ })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("button", { name: /Проверить снова через \d+ с/ })).toBeDisabled();
 
   const term = page.locator(".xterm");
   await term.click();

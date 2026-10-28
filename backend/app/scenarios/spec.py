@@ -104,6 +104,8 @@ class _Base(BaseModel):
     legend: Legend
     params: dict[str, list[Any]] = {}
     incidents: list[Incident] = []
+    # pool mode: each variant gets a random number of incidents in [lo, hi] from `incidents` (None = all, in order)
+    incidents_pick: tuple[int, int] | None = None
     checks: list[Check] = Field(min_length=1)
     hints: Hints
     success: Success = Success()
@@ -124,6 +126,11 @@ class _Base(BaseModel):
         return self
 
 
+def _check_pick(pick: tuple[int, int] | None, pool: int) -> None:
+    if pick is not None and not 1 <= pick[0] <= pick[1] <= pool:
+        raise ValueError(f"incidents_pick must satisfy 1 <= lo <= hi <= {pool} (number of incidents)")
+
+
 class ContainerSpec(_Base):
     kind: Literal["container"] = "container"
     profile: str = "small"
@@ -132,6 +139,7 @@ class ContainerSpec(_Base):
 
     @model_validator(mode="after")
     def _incident_faults(self) -> "ContainerSpec":
+        _check_pick(self.incidents_pick, len(self.incidents))
         for inc in self.incidents:
             if inc.fault is None or inc.fault not in self.faults.catalog:
                 raise ValueError(f"incident {inc.id}: fault must reference the catalog")

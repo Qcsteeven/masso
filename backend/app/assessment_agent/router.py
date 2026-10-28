@@ -4,7 +4,7 @@ from typing import Any
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-from app.assessment_agent import hints, service
+from app.assessment_agent import hints, selfcheck, service
 from app.deps import DB, StudentUser
 from app.errors import ok
 from app.sessions.service import check_access, get_session
@@ -21,6 +21,13 @@ async def hint(session_id: uuid.UUID, body: HintIn, user: StudentUser, db: DB) -
     s = await get_session(db, session_id)
     await check_access(db, user, s, write=True)
     return ok(await hints.request_hint(db, s, body.question))
+
+
+@router.post("/{session_id}/self-check")
+async def self_check(session_id: uuid.UUID, user: StudentUser, db: DB) -> dict[str, Any]:
+    s = await get_session(db, session_id)
+    await check_access(db, user, s, write=True)
+    return ok(await selfcheck.self_check(db, s))
 
 
 @router.post("/{session_id}/submit")
