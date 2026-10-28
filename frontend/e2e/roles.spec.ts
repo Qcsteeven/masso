@@ -24,6 +24,16 @@ for (const r of ROLES) {
   });
 }
 
+test("a student sees the competency map and skill details", async ({ page }) => {
+  await login(page, "demonov.la@masso.local");
+  await page.goto("/student/skills");
+  await expect(page.getByText(/Направление освоено на \d+ %/)).toBeVisible();
+  const node = page.locator(".react-flow__node", { hasText: "Основы Linux" });
+  await node.click();
+  await expect(page.getByRole("heading", { level: 2, name: "Основы Linux" })).toBeVisible();
+  await expect(page.getByText("Открывает")).toBeVisible();
+});
+
 test("a student cannot open staff screens", async ({ page }) => {
   await login(page, "demonov.la@masso.local");
   for (const path of ["/teacher", "/methodist/templates", "/admin/users", "/sysadmin"]) {

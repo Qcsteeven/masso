@@ -1,14 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { api } from "../../api/client";
-import { DOMAIN_LABEL, PRIORITY_LABEL, type MySkill, type Recommendations } from "../../api/types";
+import { DOMAIN_LABEL, PRIORITY_LABEL, type Assignment, type MySkill, type Recommendations, type SkillGraph } from "../../api/types";
 import { Page, PageHeader } from "../../components/Layout";
 import { Bar, Card, CardTitle, Chip, Empty, ErrorBanner, Filter, Loading, Select, Table, fmtDate } from "../../components/ui";
 import { PRIORITY_TONE } from "./Home";
+import { SkillMap } from "./SkillMap";
 
 export default function Skills() {
   const skills = useQuery({ queryKey: ["skills-me"], queryFn: () => api.get<MySkill[]>("/api/skills/me") });
-  const domains = useMemo(() => [...new Set((skills.data ?? []).map((s) => s.domain_code))], [skills.data]);
+  const assignments = useQuery({ queryKey: ["assignments-me"], queryFn: () => api.get<Assignment[]>("/api/scenarios/assignments/me") });
+  // the student's assigned directions first (as on «Мои назначения»), then the rest of the profile
+  const domains = useMemo(() => [...new Set([
+    ...(assignments.data ?? []).map((a) => a.template.domain_code),
+    ...(skills.data ?? []).map((s) => s.domain_code),
+  ])], [assignments.data, skills.data]);
   const [sel, setSel] = useState<string | null>(null);
   const domain = sel ?? domains[0] ?? "devops";
   const recs = useQuery({
@@ -16,12 +22,13 @@ export default function Skills() {
     queryFn: () => api.get<Recommendations>("/api/skills/recommendations", { domain }),
     enabled: !!domain,
   });
+  const graph = useQuery({ queryKey: ["skills-graph", domain], queryFn: () => api.get<SkillGraph>("/api/skills/graph", { domain }), enabled: !!domain });
   const deficits = new Map((recs.data?.deficits ?? []).map((d) => [d.skill_id, d]));
   const rows = (skills.data ?? []).filter((s) => s.domain_code === domain);
 
   return (
     <>
-      <PageHeader title="Мои навыки" subtitle="Профиль компетенций и выявленные дефициты"
+      <PageHeader title="Мои навыки" subtitle="Карта компетенций направления: что освоено, что изучается и куда двигаться дальше"
         actions={domains.length > 1 && (
           <Filter label="Направление">
             <Select value={domain} onChange={(e) => setSel(e.target.value)}>
@@ -30,8 +37,10 @@ export default function Skills() {
           </Filter>
         )} />
       <Page>
+        {graph.error && <ErrorBanner error={graph.error} />}
+        {graph.data && skills.data && <SkillMap graph={graph.data} skills={skills.data} deficits={recs.data?.deficits ?? []} domain={domain} />}
         <Card padded={false}>
-          <div className="p-5 pb-3"><CardTitle>{DOMAIN_LABEL[domain] ?? domain}</CardTitle></div>
+          <div className="p-5 pb-3"><CardTitle>Подробно: {DOMAIN_LABEL[domain] ?? domain}</CardTitle></div>
           {skills.isLoading ? <Loading /> : skills.error ? <div className="p-5"><ErrorBanner error={skills.error} /></div> : !rows.length ? (
             <Empty>Профиль ещё не сформирован.</Empty>
           ) : (
@@ -46,7 +55,7 @@ export default function Skills() {
                       <td><div className="font-medium">{s.name}</div><div className="font-mono text-xs text-muted">{s.code}</div></td>
                       <td>
                         <div className="flex items-center gap-3">
-                          <div className="flex-1"><Bar value={s.level} max={s.level_max} tone={s.level >= req ? "green" : req - s.level >= 2 ? "red" : "blue"} /></div>
+                          <div className="flex-1"><Bar value={s.level} max={s.level_max} tone={s.level >= req ? "green" : s.level > 0 ? "amber" : "blue"} /></div>
                           <span className="font-mono text-muted">{s.level}/{s.level_max}</span>
                         </div>
                       </td>
