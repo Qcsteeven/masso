@@ -40,12 +40,24 @@ class Provider(Protocol):
 
 class OpenAICompatProvider:
     def __init__(
-        self, code: str, mode: str, base_url: str, api_key: str, chat_model: str, embed_model: str, timeout: float
+        self,
+        code: str,
+        mode: str,
+        base_url: str,
+        api_key: str,
+        chat_model: str,
+        embed_model: str,
+        timeout: float,
+        *,
+        json_mode: bool = True,
     ) -> None:
         from openai import AsyncOpenAI
 
         self.code, self.mode = code, mode
         self.chat_model, self.embed_model = chat_model, embed_model
+        # False: the provider rejects response_format=json_object (GigaChat via gpt2giga); JSON is still
+        # requested by the system prompt and parsed from the text
+        self.json_mode = json_mode
         self._client = AsyncOpenAI(base_url=base_url, api_key=api_key or "none", timeout=timeout, max_retries=0)
 
     async def chat(
@@ -61,7 +73,7 @@ class OpenAICompatProvider:
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
-        if json_mode:
+        if json_mode and self.json_mode:
             kwargs["response_format"] = {"type": "json_object"}
         t0 = time.perf_counter()
         try:

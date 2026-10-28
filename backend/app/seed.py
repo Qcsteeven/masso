@@ -105,34 +105,32 @@ async def seed_core(db: AsyncSession) -> None:
             },
             code=code,
         )
-    await _get_or_create(
-        db,
-        LLMProvider,
-        {
-            "mode": "external",
-            "base_url": settings.llm_external_base_url,
-            "chat_model": settings.llm_external_chat_model,
-            "embeddings_model": settings.llm_external_embed_model,
-            "api_key_env": "LLM_EXTERNAL_API_KEY",
-            "priority": 1,
-            "status": "active",
-        },
-        code="external",
-    )
-    await _get_or_create(
-        db,
-        LLMProvider,
-        {
-            "mode": "local",
-            "base_url": settings.llm_local_base_url,
-            "chat_model": settings.llm_local_chat_model,
-            "embeddings_model": settings.llm_local_embed_model,
-            "api_key_env": "LLM_LOCAL_API_KEY",
-            "priority": 2,
-            "status": "standby",
-        },
-        code="local",
-    )
+    for code, conn, extra in (
+        (
+            "external",
+            {
+                "base_url": settings.llm_external_base_url,
+                "chat_model": settings.llm_external_chat_model,
+                "embeddings_model": settings.llm_external_embed_model,
+            },
+            {"mode": "external", "api_key_env": "LLM_EXTERNAL_API_KEY", "priority": 1, "status": "active"},
+        ),
+        (
+            "local",
+            {
+                "base_url": settings.llm_local_base_url,
+                "chat_model": settings.llm_local_chat_model,
+                "embeddings_model": settings.llm_local_embed_model,
+            },
+            {"mode": "local", "api_key_env": "LLM_LOCAL_API_KEY", "priority": 2, "status": "standby"},
+        ),
+    ):
+        provider, created = await _get_or_create(db, LLMProvider, {**conn, **extra}, code=code)
+        if not created:
+            # LLM_* set in .env after the first seed: the next seed applies them (empty values keep the row)
+            for k, v in conn.items():
+                if v:
+                    setattr(provider, k, v)
     await _get_or_create(db, LLMProvider, {"mode": "template", "priority": 3, "status": "active"}, code="template")
     await _get_or_create(db, LLMSettings, {"generation_mode": settings.llm_generation_mode}, id=1)
 

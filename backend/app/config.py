@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     llm_local_chat_model: str = ""
     llm_local_embed_model: str = "bge-m3"
     llm_timeout_sec: float = 60.0
+    # send response_format=json_object (false for providers that reject it, e.g. GigaChat via gpt2giga)
+    llm_external_json_mode: bool = True
+    llm_local_json_mode: bool = True
     embedding_dim: int = 1024
 
     instance_id: str = "masso"  # label masso.instance: the reaper touches only its own containers

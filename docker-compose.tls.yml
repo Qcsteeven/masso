@@ -11,3 +11,11 @@ services:
   backend:
     environment:
       COOKIE_SECURE: "true"
+  # GigaChat proxy (profile gigachat): verify the GigaChat certificate against the Russian Trusted Root CA
+  # placed in ${TLS_CERT_DIR}/russian_trusted_root_ca.pem (README, «GigaChat»).
+  gpt2giga:
+    volumes:
+      - ${TLS_CERT_DIR:-./certs}:/certs:ro
+    environment:
+      GIGACHAT_VERIFY_SSL_CERTS: "True"
+      GIGACHAT_CA_BUNDLE_FILE: /certs/russian_trusted_root_ca.pem

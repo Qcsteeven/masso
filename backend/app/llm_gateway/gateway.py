@@ -49,8 +49,16 @@ ProviderFactory = Callable[[LLMProvider], Provider]
 def default_factory(row: LLMProvider) -> Provider:
     s = get_settings()
     key = os.environ.get(row.api_key_env, "") if row.api_key_env else ""
+    json_mode = s.llm_local_json_mode if row.mode == "local" else s.llm_external_json_mode
     return OpenAICompatProvider(
-        row.code, row.mode, row.base_url, key, row.chat_model, row.embeddings_model, s.llm_timeout_sec
+        row.code,
+        row.mode,
+        row.base_url,
+        key,
+        row.chat_model,
+        row.embeddings_model,
+        s.llm_timeout_sec,
+        json_mode=json_mode,
     )
 
 

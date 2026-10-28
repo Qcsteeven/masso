@@ -47,6 +47,27 @@ services:
       - ollama:/root/.ollama
     restart: unless-stopped
 
+  # GigaChat through the OpenAI-compatible proxy gpt2giga (OAuth token refresh, model mapping).
+  # Enable: COMPOSE_PROFILES=gigachat in .env, LLM_EXTERNAL_BASE_URL=http://gpt2giga:8090/v1.
+  # The port is not published: only the backend reaches it inside the compose network.
+  gpt2giga:
+    profiles: ["gigachat"]
+    image: ghcr.io/ai-forever/gpt2giga:0.3.0
+    environment:
+      GPT2GIGA_MODE: PROD
+      GPT2GIGA_HOST: 0.0.0.0
+      GPT2GIGA_PORT: "8090"
+      GPT2GIGA_ENABLE_API_KEY_AUTH: "True"
+      GPT2GIGA_API_KEY: ${LLM_EXTERNAL_API_KEY:-}
+      GPT2GIGA_PASS_MODEL: "True"
+      GPT2GIGA_CORS_ALLOW_ORIGINS: "[]"
+      GIGACHAT_CREDENTIALS: ${GIGACHAT_CREDENTIALS:-}
+      GIGACHAT_SCOPE: ${GIGACHAT_SCOPE:-GIGACHAT_API_PERS}
+      GIGACHAT_MODEL: ${LLM_EXTERNAL_CHAT_MODEL:-GigaChat-2}
+      # test mode only (ТЗ 4.9, DEVIATIONS Д-33); operation mode turns it on in docker-compose.tls.yml
+      GIGACHAT_VERIFY_SSL_CERTS: ${GIGACHAT_VERIFY_SSL_CERTS:-True}
+    restart: unless-stopped
+
 volumes:
   pgdata:
   snapshots:
