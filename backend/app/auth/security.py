@@ -13,6 +13,8 @@ from app.config import get_settings
 
 _hasher = PasswordHash.recommended()  # argon2id
 ALGO = "HS256"
+# WSL2 steps the wall clock back by up to ~1 s when syncing with the host: tolerate small skew on iat/exp
+CLOCK_SKEW = timedelta(seconds=5)
 
 
 def hash_password(password: str) -> str:
@@ -32,7 +34,7 @@ def _encode(claims: dict[str, Any]) -> str:
 
 def decode_token(token: str, expected_type: str) -> dict[str, Any]:
     """Raises jwt.PyJWTError on invalid/expired token or wrong type."""
-    claims: dict[str, Any] = jwt.decode(token, get_settings().jwt_secret, algorithms=[ALGO])
+    claims: dict[str, Any] = jwt.decode(token, get_settings().jwt_secret, algorithms=[ALGO], leeway=CLOCK_SKEW)
     if claims.get("typ") != expected_type:
         raise jwt.InvalidTokenError("wrong token type")
     return claims
