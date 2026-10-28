@@ -21,7 +21,7 @@ from app.events.service import STUDENT_VISIBLE, event_out, record_event
 from app.sandbox.manager import SandboxError, get_sandbox
 from app.sandbox.service import ensure_capacity, load_profile
 from app.scenarios.models import ScenarioRun
-from app.scenarios.spec import ContainerSpec, DocumentSpec, parse_spec, to_public
+from app.scenarios.spec import CodeSpec, ContainerSpec, DocumentSpec, parse_spec, to_public
 from app.sessions.detectors import classify_command
 from app.sessions.models import Hint, LearningSession
 from app.users.models import User
@@ -129,7 +129,8 @@ async def start_session(db: AsyncSession, user: CurrentUser, run_id: uuid.UUID) 
         else:
             s.documents_state = {
                 "documents": {d.id: d.markdown for d in spec.documents},
-                "answers": {},
+                # code engine: the workspace starts from the skeleton files
+                "answers": {"files": dict(spec.files)} if isinstance(spec, CodeSpec) else {},
                 "applied_incidents": [],
             }
     except (SandboxError, AppError) as exc:
@@ -265,8 +266,11 @@ async def resume(db: AsyncSession, s: LearningSession, now: datetime | None = No
 
 
 async def save_answers(db: AsyncSession, s: LearningSession, answers: dict[str, Any]) -> dict[str, Any]:
-    if s.kind != "document":
-        raise AppError(ErrorCode.VALIDATION_ERROR, "Ответ через форму предусмотрен только в документных сценариях.")
+    if s.kind not in ("document", "code"):
+        raise AppError(
+            ErrorCode.VALIDATION_ERROR,
+            "Ответ через форму предусмотрен только в документных сценариях и задачах на код.",
+        )
     if s.status not in ("active", "paused"):
         raise AppError(ErrorCode.SESSION_NOT_READY, "Сессия не активна.")
     if len(json.dumps(answers, ensure_ascii=False)) > MAX_ANSWER_CHARS:
@@ -280,7 +284,9 @@ async def save_answers(db: AsyncSession, s: LearningSession, answers: dict[str, 
                 {"max_field_chars": MAX_FIELD_CHARS},
             )
     _run, spec = await load_spec(db, s)
-    if isinstance(spec, DocumentSpec) and isinstance(findings, list):
+    if isinstance(spec, CodeSpec):
+        check_code_files(spec, answers)
+    elif isinstance(spec, DocumentSpec) and isinstance(findings, list):
         # listing every section × defect type would pass the rule checks without reading the documents
         cap = len(spec.answer_key) + sum(1 for i in spec.incidents if i.adds_answer) + EXTRA_FINDINGS
         if len(findings) > cap:
@@ -338,6 +344,24 @@ async def apply_incident(db: AsyncSession, s: LearningSession, now: datetime) ->
     if s.incident_due_at is not None:
         s.incident_applied_at = None
     return True
+
+
+def check_code_files(spec: CodeSpec, answers: dict[str, Any]) -> dict[str, str]:
+    """The answer of a code session: {"files": {name: text}} with the scenario's file names only."""
+    from app.coderun.runner import MAX_FILE_CHARS
+
+    files = answers.get("files")
+    if (
+        not isinstance(files, dict)
+        or set(answers) - {"files"}
+        or not set(files) <= set(spec.files)
+        or not all(isinstance(v, str) and len(v) <= MAX_FILE_CHARS for v in files.values())
+    ):
+        raise AppError(
+            ErrorCode.VALIDATION_ERROR,
+            f"Ожидаются файлы {', '.join(sorted(spec.files))} размером до {MAX_FILE_CHARS} символов.",
+        )
+    return {str(k): str(v) for k, v in files.items()}
 
 
 EXTRA_FINDINGS = 2  # findings allowed beyond the answer key

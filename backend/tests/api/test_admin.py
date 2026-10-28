@@ -11,7 +11,7 @@ pytestmark = pytest.mark.db
 async def test_admin_endpoints(client: AsyncClient, seeded: None, as_admin: dict[str, str]) -> None:
     ops = await login(client, "ops@masso.local")
     r = await client.get("/api/admin/sandbox/profiles", headers=ops)
-    assert {p["code"] for p in r.json()["data"]} == {"small", "medium", "document"}
+    assert {p["code"] for p in r.json()["data"]} == {"small", "medium", "document", "code"}
     r = await client.patch("/api/admin/sandbox/profiles/small", headers=as_admin, json={"pids_limit": 160})
     assert r.json()["data"]["pids_limit"] == 160
     assert (await client.patch("/api/admin/sandbox/profiles/small", headers=ops, json={"cpu": 2})).status_code == 403

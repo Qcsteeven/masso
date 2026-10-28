@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 from app.llm_gateway.providers import cosine
-from app.scenarios.spec import Check, ContainerSpec, DocumentSpec
+from app.scenarios.spec import Check, CodeSpec, ContainerSpec, DocumentSpec
 
 SEMANTIC_THRESHOLD = 0.85
 MAX_DETAIL = 500
@@ -68,6 +68,8 @@ class CheckContext:
     answers: dict[str, Any] = field(default_factory=dict)
     applied_incidents: set[str] = field(default_factory=set)
     embed: Embedder | None = None
+    code: CodeSpec | None = None  # code engine: the spec and an open throwaway sandbox (app.coderun)
+    box: Any = None
 
 
 def _norm(s: str) -> str:
@@ -135,6 +137,22 @@ async def run_check(check: Check, ctx: CheckContext) -> CheckResult:
     req = p.get("requires_incident")
     if req and req not in ctx.applied_incidents:
         res.skipped, res.passed, res.detail = True, True, "инцидент не наступил"
+        return res
+    if check.type in ("code_cases", "code_student_tests"):
+        from app.coderun import checks as code_checks
+
+        if ctx.code is None or ctx.box is None:
+            res.detail = "среда выполнения кода недоступна"
+            return res
+        files = ctx.answers.get("files") or {}
+        if check.type == "code_cases":
+            res.passed, res.detail = await code_checks.check_cases(
+                ctx.box, ctx.code, files, str(p.get("group", "basic")), float(p.get("time_limit", 10))
+            )
+        else:
+            res.passed, res.detail = await code_checks.check_student_tests(
+                ctx.box, ctx.code, files, int(p.get("min_killed", 2))
+            )
         return res
     if check.type in ("http_health", "docker_exec", "file_diff", "docker_inspect"):
         if ctx.sandbox is None or ctx.container_id is None:
@@ -217,6 +235,18 @@ async def run_check(check: Check, ctx: CheckContext) -> CheckResult:
 
 
 async def run_checks(spec: ContainerSpec | DocumentSpec, ctx: CheckContext) -> list[CheckResult]:
+    if isinstance(spec, CodeSpec) and ctx.box is None:
+        from app.coderun.runner import get_code_runner
+
+        # one throwaway sandbox for all checks of a run; removed right after
+        async with get_code_runner().box() as box:
+            ctx.code, ctx.box = spec, box
+            try:
+                return [await run_check(c, ctx) for c in spec.checks]
+            finally:
+                ctx.box = None
+    if isinstance(spec, CodeSpec):
+        ctx.code = spec
     return [await run_check(c, ctx) for c in spec.checks]
 
 

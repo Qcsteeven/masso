@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { ApiError, api } from "../../api/client";
-import { type AnswerForm, type HintOut, type ScenarioPublic, type SessionEvent, type SessionView, type SubmitOut } from "../../api/types";
+import { type AnswerForm, type CodingPublic, type HintOut, type ScenarioPublic, type SessionEvent, type SessionView, type SubmitOut } from "../../api/types";
 import { Icon, type IconName } from "../../components/icons";
 import { ThemeToggle } from "../../components/Layout";
 import { Banner, Button, Card, CardTitle, Chip, ErrorBanner, Loading, Textarea, cx, fmtTime, type Tone } from "../../components/ui";
@@ -11,6 +11,7 @@ import { Terminal } from "./Terminal";
 import { openSessionSocket } from "./ws";
 import { TheoryCard } from "../../components/Theory";
 import { useDomainLabel } from "../../api/domains";
+import { CodePanel } from "./CodePanel";
 
 const STATUS_CHIP: Record<string, { label: string; tone: Tone }> = {
   starting: { label: "запуск среды", tone: "blue" },
@@ -84,6 +85,7 @@ const STATUS_TITLE: Record<string, string> = {
 };
 
 const isForm = (f: ScenarioPublic["answer_form"]): f is AnswerForm => "type" in f;
+const isCoding = (c: ScenarioPublic["coding"]): c is CodingPublic => !!c && "func" in c;
 
 interface SelfCheck { results: { title: string; passed: boolean; skipped: boolean }[]; passed: number; total: number; retry_after_sec: number; at: string }
 
@@ -175,7 +177,7 @@ export default function Workspace() {
   });
   const submit = useMutation({
     mutationFn: async () => {
-      if (s?.kind === "document" && answers && dirty.current) await api.post(`/api/sessions/${id}/answers`, { answers });
+      if ((s?.kind === "document" || s?.kind === "code") && answers && dirty.current) await api.post(`/api/sessions/${id}/answers`, { answers });
       return api.post<SubmitOut>(`/api/sessions/${id}/submit`);
     },
     onSuccess: () => {
@@ -287,6 +289,10 @@ export default function Workspace() {
         <div className="flex min-w-0 flex-col gap-4">
           {s.kind === "container" ? (
             <Terminal sessionId={id} enabled={live} />
+          ) : s.kind === "code" && isCoding(sc.coding) && answers ? (
+            <CodePanel sessionId={id} coding={sc.coding} live={live} saveState={saveState}
+              files={(answers.files as Record<string, string> | undefined) ?? sc.coding.files}
+              onChange={(files) => { dirty.current = true; setAnswers({ ...answers, files }); }} />
           ) : (
             <>
               <DocumentViewer documents={sc.documents} changed={changedDocs} />

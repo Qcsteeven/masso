@@ -9,7 +9,15 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Field, TypeAdapter, model_validator
 
 CheckType = Literal[
-    "docker_inspect", "docker_exec", "http_health", "file_diff", "rule_match", "semantic_similarity", "numeric_match"
+    "docker_inspect",
+    "docker_exec",
+    "http_health",
+    "file_diff",
+    "rule_match",
+    "semantic_similarity",
+    "numeric_match",
+    "code_cases",
+    "code_student_tests",
 ]
 
 
@@ -157,10 +165,29 @@ class DocumentSpec(_Base):
     answer_form: dict[str, Any] = {}  # JSON-schema-like description of the student form
 
 
-ScenarioSpec = Annotated[ContainerSpec | DocumentSpec, Field(discriminator="kind")]
+class CodeExample(BaseModel):
+    args: list[Any]
+    expected: Any
 
 
-_ADAPTER: TypeAdapter[ContainerSpec | DocumentSpec] = TypeAdapter(ScenarioSpec)
+class CodeSpec(DocumentSpec):
+    """Writing code with tests (Д-44): the answer is {"files": {...}}; checks run it in a throwaway sandbox."""
+
+    kind: Literal["code"] = "code"  # type: ignore[assignment]
+    profile: str = "code"
+    language: Literal["python"] = "python"
+    statement: str = ""  # Markdown task for the student
+    func: str = ""
+    files: dict[str, str] = {}  # starting files: solution.py, test_solution.py
+    examples: list[CodeExample] = []  # public examples
+    hidden: dict[str, Any] = {}  # hidden inputs by group; expected values are computed by the reference at check time
+    task: dict[str, Any] = {}  # variant parameters of the reference, mutants and wrong solutions
+
+
+ScenarioSpec = Annotated[ContainerSpec | DocumentSpec | CodeSpec, Field(discriminator="kind")]
+
+
+_ADAPTER: TypeAdapter[ContainerSpec | DocumentSpec | CodeSpec] = TypeAdapter(ScenarioSpec)
 
 
 def parse_spec(data: dict[str, Any]) -> ContainerSpec | DocumentSpec:
@@ -195,6 +222,8 @@ class ScenarioPublic(BaseModel):
     documents: list[DocumentPublic] = []
     defect_types: dict[str, str] = {}
     answer_form: dict[str, Any] = {}
+    # code engine: statement, public examples and starting files only (no hidden inputs, references or mutants)
+    coding: dict[str, Any] = {}
 
 
 def to_public(run_id: str, spec: ContainerSpec | DocumentSpec) -> ScenarioPublic:
@@ -220,4 +249,15 @@ def to_public(run_id: str, spec: ContainerSpec | DocumentSpec) -> ScenarioPublic
         documents=docs,
         defect_types=defect_types,
         answer_form=form,
+        coding=(
+            {
+                "language": spec.language,
+                "func": spec.func,
+                "statement": spec.statement,
+                "files": spec.files,
+                "examples": [e.model_dump() for e in spec.examples],
+            }
+            if isinstance(spec, CodeSpec)
+            else {}
+        ),
     )

@@ -13,7 +13,7 @@ export interface TemplateBrief {
   code: string;
   title: string;
   domain_code: string;
-  kind: "container" | "document";
+  kind: "container" | "document" | "code";
   status: "draft" | "published" | "archived";
   version: number;
   difficulty: number;
@@ -39,11 +39,27 @@ export type SessionStatus =
 
 export interface DocumentPublic { id: string; title: string; markdown: string }
 
+export interface CodingPublic {
+  language: "python";
+  func: string;
+  statement: string;
+  files: Record<string, string>;
+  examples: { args: unknown[]; expected: unknown }[];
+}
+
+export interface CodeRunOut {
+  examples: { call: string; expected: unknown; got: unknown; error: string | null; ok: boolean }[];
+  examples_error: string | null;
+  tests: { total: number; passed: number; failures: { name: string; error: string }[]; import_error: string | null };
+  stdout: string;
+  retry_after_sec: number;
+}
+
 export interface ScenarioPublic {
   run_id: string;
   code: string;
   domain: string;
-  kind: "container" | "document";
+  kind: "container" | "document" | "code";
   title: string;
   legend: string;
   difficulty: number;
@@ -55,6 +71,7 @@ export interface ScenarioPublic {
   documents: DocumentPublic[];
   defect_types: Record<string, string>;
   answer_form: AnswerForm | Record<string, never>;
+  coding?: CodingPublic | Record<string, never>;
 }
 
 export type AnswerForm =
@@ -73,7 +90,7 @@ export interface SessionView {
   id: string;
   run_id: string;
   status: SessionStatus;
-  kind: "container" | "document";
+  kind: "container" | "document" | "code";
   started_at: string | null;
   finished_at: string | null;
   time_limit_min: number;
@@ -188,9 +205,10 @@ export const DOMAIN_LABEL: Record<string, string> = {
   security: "Информационная безопасность",
   legal: "Юриспруденция",
   audit: "Экономика и аудит",
+  algorithms: "Алгоритмы и структуры данных",
 };
 
-export const KIND_LABEL: Record<string, string> = { container: "учебная среда", document: "документный тренажёр" };
+export const KIND_LABEL: Record<string, string> = { container: "учебная среда", document: "документный тренажёр", code: "задача на код" };
 
 export const PRIORITY_LABEL: Record<Priority, string> = { critical: "критический", high: "высокий", medium: "средний", low: "низкий" };
 

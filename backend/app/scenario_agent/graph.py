@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.llm_gateway.gateway import LLMGateway
 from app.scenarios.generators import GENERATORS, reference_answer
-from app.scenarios.spec import ContainerSpec, DocumentSpec, parse_spec
+from app.scenarios.spec import CodeSpec, ContainerSpec, DocumentSpec, parse_spec
 from app.verification.engine import CheckContext, all_passed, any_failed, run_checks
 
 log = logging.getLogger("masso.scenario_agent")
@@ -105,6 +105,21 @@ class ScenarioAgent:
                 )
                 chosen["incidents"] = [i["id"] for i in base["incidents"]]
                 base["incidents_pick"] = None  # the variant has a fixed list
+        elif base["kind"] == "code":
+            from app.coderun.tasks import TASKS
+
+            v = TASKS[base["builder"]].build(rng)
+            params.update(v.params)
+            base.update(
+                func=v.func,
+                statement=v.statement,
+                files=v.files,
+                examples=[e.model_dump() for e in v.examples],
+                hidden=v.hidden,
+                task=v.task,
+                checks=[c.model_dump() for c in v.checks],
+                incidents=[i.model_dump() for i in v.incidents],
+            )
         elif base.get("builder"):
             gen = GENERATORS[base["builder"]](rng)
             params.update(gen.params)
@@ -221,7 +236,9 @@ class ScenarioAgent:
         t0 = time.perf_counter()
         spec = parse_spec(s["spec"])
         try:
-            if isinstance(spec, ContainerSpec):
+            if isinstance(spec, CodeSpec):
+                ok, detail, sub = await self._validate_code(spec)
+            elif isinstance(spec, ContainerSpec):
                 ok, detail, sub = await self._validate_container(spec)
             else:
                 ok, detail, sub = await self._validate_document(spec)
@@ -234,6 +251,58 @@ class ScenarioAgent:
             "steps": steps,
             "errors": [*s.get("errors", []), *([] if ok else [detail])],
         }
+
+    async def _validate_code(self, spec: CodeSpec) -> tuple[bool, str, list[dict[str, Any]]]:
+        """Reference solution and tests pass every check; the skeleton and typical wrong solutions do not."""
+        from app.coderun import tasks
+        from app.coderun.checks import run_cases
+        from app.coderun.runner import get_code_runner
+
+        sub: list[dict[str, Any]] = []
+        applied = {i.id for i in spec.incidents}
+        ref = {
+            "solution.py": tasks.reference_source(spec.builder, spec.task),
+            "test_solution.py": tasks.reference_tests(spec.builder, spec.task),
+        }
+
+        def step(name: str, ok: bool, detail: str, t0: float) -> None:
+            sub.append(
+                {"step": name, "ok": ok, "detail": detail, "duration_ms": int((time.perf_counter() - t0) * 1000)}
+            )
+
+        async with get_code_runner().box() as box:
+            t0 = time.perf_counter()
+            res = await run_checks(spec, CheckContext(answers={"files": ref}, applied_incidents=applied, box=box))
+            failed = [r.id for r in res if not r.passed]
+            step(
+                "reference_solution",
+                not failed,
+                "эталон проходит все проверки" if not failed else f"не пройдены: {failed}",
+                t0,
+            )
+            t0 = time.perf_counter()
+            res = await run_checks(
+                spec, CheckContext(answers={"files": spec.files}, applied_incidents=applied, box=box)
+            )
+            step("skeleton_fails", any_failed(res), "заготовка не проходит проверки", t0)
+            groups = [g for g in ["examples", *spec.hidden] if g != "perf"] + ["perf"]
+            limits = {c.params.get("group"): float(c.params.get("time_limit", 5)) for c in spec.checks}
+            for i, wrong in enumerate(tasks.wrong_sources(spec.builder, spec.task), start=1):
+                t0 = time.perf_counter()
+                caught = ""
+                for g in groups:  # cheap groups first: stop at the first failing one
+                    r = await run_cases(box, spec, wrong, g, limits.get(g, 5.0))
+                    if not r["passed"]:
+                        caught = g
+                        break
+                step(
+                    f"wrong_solution_{i}",
+                    bool(caught),
+                    f"отклонено проверкой «{caught}»" if caught else "не отклонено",
+                    t0,
+                )
+        ok = all(x["ok"] for x in sub)
+        return ok, "эталон и типичные ошибки проверены прогоном" if ok else "вариант не прошёл проверку прогоном", sub
 
     async def _validate_document(self, spec: DocumentSpec) -> tuple[bool, str, list[dict[str, Any]]]:
         sub: list[dict[str, Any]] = []

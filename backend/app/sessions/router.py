@@ -104,6 +104,19 @@ async def answers(session_id: uuid.UUID, body: AnswersIn, user: StudentUser, db:
     return ok({"answers": await service.save_answers(db, s, body.answers)})
 
 
+class RunIn(BaseModel):
+    files: dict[str, str]
+
+
+@router.post("/{session_id}/run")
+async def run_code(session_id: uuid.UUID, body: RunIn, user: StudentUser, db: DB) -> dict[str, Any]:
+    from app.coderun.service import run_student_code
+
+    s = await service.get_session(db, session_id)
+    await service.check_access(db, user, s, write=True)
+    return ok(await run_student_code(db, s, body.files))
+
+
 @router.post("/{session_id}/ws-token")
 async def ws_token(session_id: uuid.UUID, user: StudentUser, db: DB) -> dict[str, Any]:
     s = await service.get_session(db, session_id)

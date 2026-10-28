@@ -55,11 +55,15 @@ class ExecResult:
         return self.exit_code == 0 and not self.timed_out
 
 
-def container_config(profile: Profile, labels: dict[str, str]) -> dict[str, Any]:
-    """The full create-config. Kept as a pure function so tests can assert every security flag."""
+def container_config(profile: Profile, labels: dict[str, str], cmd: list[str] | None = None) -> dict[str, Any]:
+    """The full create-config. Kept as a pure function so tests can assert every security flag.
+
+    `cmd` replaces the image command (code runs: `sleep infinity` instead of the supervised web stack).
+    """
     if profile.network_policy != "deny_all":
         raise SandboxError("Сетевые политики кроме deny_all относятся ко второй очереди.")
     return {
+        **({"Cmd": cmd} if cmd else {}),
         "Image": profile.image,
         "User": STUDENT,
         "Labels": labels,
@@ -114,12 +118,19 @@ class SandboxManager:
         }
 
     async def create(
-        self, session_id: str, user_id: str, profile: Profile, *, kind: str = "session", wait_ready: float = 60.0
+        self,
+        session_id: str,
+        user_id: str,
+        profile: Profile,
+        *,
+        kind: str = "session",
+        wait_ready: float = 60.0,
+        cmd: list[str] | None = None,
     ) -> str:
         labels = {LABEL_SESSION: session_id, LABEL_USER: user_id, LABEL_KIND: kind, LABEL_INSTANCE: self.instance}
         try:
             container = await self.docker.containers.create(
-                container_config(profile, labels), name=f"masso-{kind}-{session_id[:12]}"
+                container_config(profile, labels, cmd), name=f"masso-{kind}-{session_id[:12]}"
             )
             await container.start()
         except aiodocker.DockerError as exc:
