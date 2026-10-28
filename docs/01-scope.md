@@ -38,7 +38,7 @@
 
 ## 3. Отложить (вторая очередь)
 
-Kubernetes; Prometheus + Grafana (оставить только `/metrics` и `/health`); Redis; Neo4j; ChromaDB; Export Worker; отдельные Event Collector / Hint Service (рис. 13) — это функции AssessmentAgent; сохранение альтернативных путей решения в базу знаний (сделать кнопкой «принять как альтернативное решение» → таблица, если останется время); 2FA (на макете рис. 42); импорт ICS (макет рис. 35).
+Kubernetes; Prometheus + Grafana (оставить только `/metrics` и `/health`); Redis, Neo4j, ChromaDB (28.10.2026 исключены совсем, не вторая очередь — `DEVIATIONS.md` Д-36); Export Worker; отдельные Event Collector / Hint Service (рис. 13) — это функции AssessmentAgent; сохранение альтернативных путей решения в базу знаний (сделать кнопкой «принять как альтернативное решение» → таблица, если останется время); 2FA (на макете рис. 42); импорт ICS (макет рис. 35).
 
 ## 4. Правки ТЗ и ТП
 
