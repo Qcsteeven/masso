@@ -1,0 +1,5 @@
+# Scripts and configs of the training server are copied into a Linux image: keep LF even in Windows clones.
+* text=auto eol=lf
+*.png binary
+*.pdf binary
+*.docx binary
