@@ -1,4 +1,4 @@
-// Stroke icons from the Claude Design mockups (docs/mockups/source).
+// Stroke icons from the Claude Design mockups (docs/mockups/canvas/project).
 import type { SVGProps } from "react";
 
 const paths: Record<string, string> = {

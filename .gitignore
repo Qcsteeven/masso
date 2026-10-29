@@ -33,3 +33,5 @@ site/demo/
 
 # TLS certificates for make up-tls (never commit keys)
 certs/
+docs/diagrams/gen/viewer-static.min.js
+docs/diagrams/gen/__pycache__/
