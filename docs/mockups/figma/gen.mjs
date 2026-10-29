@@ -143,6 +143,9 @@ return { ids };
 }
 
 // ---------- screens ----------
+// screens already in the Figma file (built before the plan limit was reached); FIGMA_DONE="" rebuilds all
+const DONE = new Set((process.env.FIGMA_DONE ?? "Main,StudentHome,WorkspaceContainer,TeacherAssignments,TeacherExport,SkillGraph,DomainDialog").split(",").filter(Boolean));
+const blocks = [];
 let callNo = 2;
 for (const s of screens) {
   const d = datas[s];
@@ -213,6 +216,7 @@ return { screen: screen.id, nodes: count };
     fs.writeFileSync(path.join(outDir, name), code);
     if (code.length > LIMIT) console.warn("TOO BIG", name, code.length);
   });
+  if (files.length === 1 && !DONE.has(s)) blocks.push({ s, code: `{\n${whole.replace(/\nreturn (\{[^\n]*\});\n$/, "\nresults.push($1);\n")}\n}\n` });
   callNo++;
 }
 
@@ -234,4 +238,23 @@ page.flowStartingPoints = [{ nodeId: screens.Main.id, name: "МАССО — вх
 return { set, missing: [...new Set(missing)] };
 `,
 );
+// ---------- batches: several screens per use_figma call (the Starter plan allows few calls a month) ----------
+{
+  const batches = [];
+  let cur = "";
+  for (const b of blocks) {
+    if (cur && cur.length + b.code.length > LIMIT - 200) { batches.push(cur); cur = ""; }
+    cur += b.code;
+  }
+  if (cur) batches.push(cur);
+  // prototype links go into the last call
+  const linkCode = fs.readFileSync(path.join(outDir, "99_links.js"), "utf8").replace(/\nreturn (\{[^\n]*\});\n$/, "\nresults.push($1);\n");
+  batches[batches.length - 1] += `{\n${linkCode}\n}\n`;
+  batches.forEach((code, i) => {
+    const name = `batch_${String(i + 1).padStart(2, "0")}.js`;
+    fs.writeFileSync(path.join(outDir, name), `const results = [];\n${code}return results;\n`);
+    console.log(name, (code.length / 1024).toFixed(1) + " KB", blocks.filter((b) => code.includes(b.code)).map((b) => b.s).join(", "));
+  });
+}
+
 for (const f of fs.readdirSync(outDir)) console.log(f, (fs.statSync(path.join(outDir, f)).size / 1024).toFixed(1) + " KB");
