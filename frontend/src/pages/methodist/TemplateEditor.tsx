@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { api } from "../../api/client";
-import { type SkillGraph, type TemplateFull, type ValidationStep } from "../../api/types";
+import { ENGINE_LABEL, type SkillGraph, type TemplateFull, type ValidationStep } from "../../api/types";
 import { Icon } from "../../components/icons";
 import { Page, PageHeader } from "../../components/Layout";
 import { Banner, Button, Card, CardTitle, Chip, ErrorBanner, FieldRow, Input, Loading, Select, Table, Textarea, cx } from "../../components/ui";
@@ -86,7 +86,7 @@ export default function TemplateEditor() {
         <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
           <div className="flex min-w-0 flex-col gap-5">
             <Card className="grid grid-cols-1 gap-x-8 gap-y-3 lg:grid-cols-2">
-              <FieldRow label="Движок">{(i) => <Input id={i} readOnly value={container ? "Контейнерный · учебная среда" : "Документный тренажёр"} />}</FieldRow>
+              <FieldRow label="Движок">{(i) => <Input id={i} readOnly value={ENGINE_LABEL[spec.kind] ?? spec.kind} />}</FieldRow>
               <FieldRow label="Сложность">{(i) => <Select id={i} value={spec.difficulty} onChange={(e) => upd((s) => (s.difficulty = Number(e.target.value)))}>{[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n} из 5</option>)}</Select>}</FieldRow>
               <FieldRow label="Лимит времени, мин">{(i) => <Input id={i} type="number" min={5} max={240} value={spec.time_limit_min} onChange={(e) => upd((s) => (s.time_limit_min = Number(e.target.value)))} />}</FieldRow>
               <FieldRow label="Профиль песочницы">{(i) => <Input id={i} value={spec.profile ?? "document"} readOnly={!container} onChange={(e) => upd((s) => (s.profile = e.target.value))} />}</FieldRow>

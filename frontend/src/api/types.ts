@@ -209,6 +209,8 @@ export const DOMAIN_LABEL: Record<string, string> = {
 };
 
 export const KIND_LABEL: Record<string, string> = { container: "учебная среда", document: "документный тренажёр", code: "задача на код" };
+// Engine field of the template editor
+export const ENGINE_LABEL: Record<string, string> = { container: "Контейнерный · учебная среда", document: "Документный тренажёр", code: "Задача на код · редактор и тесты" };
 
 export const PRIORITY_LABEL: Record<Priority, string> = { critical: "критический", high: "высокий", medium: "средний", low: "низкий" };
 
