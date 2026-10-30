@@ -18,7 +18,8 @@ curl -fsSL https://get.docker.com | sudo sh && sudo usermod -aG docker $USER
 git clone https://github.com/Qcsteeven/masso.git && cd masso
 cp .env.example .env
 #    обязательно поменять в .env: POSTGRES_PASSWORD (и его же в DATABASE_URL), JWT_SECRET (≥ 32 символа);
-#    LLM: заполнить LLM_EXTERNAL_* или оставить пустым — система работает в шаблонном режиме
+#    LLM: по умолчанию GigaChat — вписать GIGACHAT_CREDENTIALS и сменить LLM_EXTERNAL_API_KEY;
+#    без ключа GigaChat система работает в шаблонном режиме
 
 # 2. Система: сборка и запуск (миграции БД применяются при старте backend)
 make up                 # http://<адрес ВМ>/ ; другой порт: HTTP_PORT=8080 make up
@@ -35,7 +36,7 @@ curl -s localhost/api/health     # "db":"ok", "worker": {...}
 
 **Локальная LLM (необязательно).** `docker compose --profile llm up -d ollama`, затем `docker compose exec ollama ollama pull <модель>` и `… ollama pull bge-m3`; в `.env`: `LLM_LOCAL_CHAT_MODEL=<модель>`, `LLM_LOCAL_EMBED_MODEL=bge-m3`, `LLM_GENERATION_MODE=local`, затем `make up && make seed` (сид переносит непустые `LLM_*` из `.env` в настройки провайдеров).
 
-**GigaChat.** GigaChat не полностью OpenAI-совместим (OAuth-токен живёт 30 минут, сертификат НУЦ Минцифры, нет режима `json_object`), поэтому подключается через прокси [gpt2giga](https://github.com/ai-forever/gpt2giga) — сервис `gpt2giga` в `docker-compose.yml` (профиль `gigachat`, порт наружу не публикуется, backend обращается к нему во внутренней сети). Код LLM Gateway не меняется — всё задаётся в `.env`:
+**GigaChat.** GigaChat не полностью OpenAI-совместим (OAuth-токен живёт 30 минут, сертификат НУЦ Минцифры, нет режима `json_object`), поэтому подключается через прокси [gpt2giga](https://github.com/ai-forever/gpt2giga) — сервис `gpt2giga` в `docker-compose.yml` (профиль `gigachat`, порт наружу не публикуется, backend обращается к нему во внутренней сети). Код LLM Gateway не меняется — всё задаётся в `.env`; в `.env.example` эти значения уже стоят по умолчанию, вписать нужно только `GIGACHAT_CREDENTIALS` (и сменить `LLM_EXTERNAL_API_KEY`):
 
 ```bash
 COMPOSE_PROFILES=gigachat                   # поднимать прокси вместе с системой

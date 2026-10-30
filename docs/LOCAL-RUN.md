@@ -57,11 +57,12 @@ cp .env.example .env
 Задайте секреты (одна команда, ничего вручную не редактировать):
 
 ```bash
-sed -i "s/^JWT_SECRET=.*/JWT_SECRET=$(openssl rand -hex 32)/; s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 12)/" .env
+sed -i "s/^JWT_SECRET=.*/JWT_SECRET=$(openssl rand -hex 32)/; s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 12)/; s/^LLM_EXTERNAL_API_KEY=.*/LLM_EXTERNAL_API_KEY=$(openssl rand -hex 24)/" .env
 ```
 
-- **Без LLM.** Остальные строки `.env` можно не трогать: система переключится в шаблонный режим и будет работать на утверждённых вариантах сценариев.
-- **С LLM.** Впишите ключ и модель OpenAI-совместимого провайдера в `LLM_EXTERNAL_API_KEY` и `LLM_EXTERNAL_CHAT_MODEL`. Для GigaChat — раздел 5б. Если LLM подключаете после первого `make seed`, выполните `make up && make seed`: сид перенесёт новые `LLM_*` в настройки провайдеров.
+- **GigaChat (по умолчанию).** `.env.example` уже настроен на GigaChat: впишите только `GIGACHAT_CREDENTIALS` (раздел 5б).
+- **Без LLM.** Оставьте `GIGACHAT_CREDENTIALS` пустым: система переключится в шаблонный режим и будет работать на утверждённых вариантах сценариев.
+- **Другой провайдер.** Закомментируйте `COMPOSE_PROFILES` и задайте `LLM_EXTERNAL_BASE_URL`, `LLM_EXTERNAL_API_KEY`, `LLM_EXTERNAL_CHAT_MODEL`, `LLM_EXTERNAL_JSON_MODE=true`. Если LLM подключаете после первого `make seed`, выполните `make up && make seed`: сид перенесёт новые `LLM_*` в настройки провайдеров.
 - **Пароль базы задавайте до первого запуска.** База создаётся при первом `make up`. Если потом поменять `POSTGRES_PASSWORD`, backend не подключится — придётся пересоздать базу (раздел 7).
 
 ## 4. Сборка и запуск
@@ -120,19 +121,11 @@ make up-tls           # HTTPS на 443, HTTP перенаправляется н
 
 GigaChat подключается через прокси gpt2giga — он уже описан в `docker-compose.yml` (профиль `gigachat`) и сам обновляет OAuth-токен. Нужен ключ авторизации из личного кабинета GigaChat API (developers.sber.ru → проект GigaChat API → «Ключ авторизации»).
 
-1. Откройте `.env` в редакторе (`nano .env`) и задайте строки (ключ вписываете только вы, в репозиторий он не попадает):
+1. Откройте `.env` в редакторе (`nano .env`) и впишите ключ (только вы, в репозиторий он не попадает):
    ```ini
-   COMPOSE_PROFILES=gigachat
    GIGACHAT_CREDENTIALS=<ключ авторизации>
-   GIGACHAT_SCOPE=GIGACHAT_API_PERS
-   GIGACHAT_VERIFY_SSL_CERTS=False
-   LLM_EXTERNAL_BASE_URL=http://gpt2giga:8090/v1
-   LLM_EXTERNAL_CHAT_MODEL=GigaChat-2-Max
-   LLM_EXTERNAL_JSON_MODE=false
-   LLM_EXTERNAL_EMBED_MODEL=
-   LLM_GENERATION_MODE=external
    ```
-   Ключ доступа backend к прокси — любая случайная строка: `sed -i "s/^LLM_EXTERNAL_API_KEY=.*/LLM_EXTERNAL_API_KEY=$(openssl rand -hex 24)/" .env`.
+   Остальное (`COMPOSE_PROFILES=gigachat`, `LLM_EXTERNAL_BASE_URL=http://gpt2giga:8090/v1`, `LLM_EXTERNAL_CHAT_MODEL=GigaChat-2`, `LLM_EXTERNAL_JSON_MODE=false`) уже стоит в `.env.example`; ключ доступа backend к прокси `LLM_EXTERNAL_API_KEY` задаёт команда из раздела 3. Модель мощнее — `GigaChat-2-Pro` или `GigaChat-2-Max`.
 2. `make up && make seed`.
 3. Проверка: `docker compose exec -T backend python - external < scripts/llm_smoke.py` — должно напечатать «Провайдер: external», легенду, строку «Вызов external: ok=True, токены …» и «Эмбеддинги: hash, размерность 1024».
 
