@@ -131,3 +131,11 @@ https://qcsteeven.github.io/masso/demo/ — тот же интерфейс бе�
 | `make e2e` | Playwright по поднятому стенду (`E2E_BASE_URL`, по умолчанию `http://localhost:8080`) |
 
 Документы проекта: `docs/02-mvp-spec.md` (спецификация), `docs/03-plan.md` (фазы), `docs/DEVIATIONS.md` (отклонения от ТЗ/ТП), `docs/doc-updates.md` (готовые правки ТЗ/ТП и рисунков), `docs/test-report.md` (испытания). Реализация велась в Claude Code по фазам: правила — `CLAUDE.md`, `.claude/`.
+
+## Руководства и курсовой проект
+
+- [Руководство пользователя](docs/manuals/user-guide.docx)
+- [Руководство администратора](docs/manuals/administrator-guide.docx)
+- [Курсовой проект в Word](docs/coursework/coursework.docx) и [PDF](docs/coursework/coursework.pdf)
+- [План курсового проекта](docs/coursework/plan.md)
+- [Макеты интерфейса в PowerPoint](docs/mockups/interface-design.pptx)
