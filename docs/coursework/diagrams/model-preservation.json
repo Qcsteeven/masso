@@ -1,0 +1,225 @@
+[
+  {
+    "diagram": "agents",
+    "cells": 62,
+    "vertices": 39,
+    "edges": 21,
+    "printed_parts": 2,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "0e72e9d58bda8d046e553423ae0ff54674ac22a53216d58b7d7515a30324854e"
+  },
+  {
+    "diagram": "backend_components",
+    "cells": 39,
+    "vertices": 32,
+    "edges": 5,
+    "printed_parts": 3,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [
+      "assessment_agent",
+      "scenario_agent"
+    ],
+    "xml_sha256": "07dc4269d84b99b1233f17b087a9642f79782ff376bd8e24d94bad0afcbd1a84"
+  },
+  {
+    "diagram": "components",
+    "cells": 36,
+    "vertices": 24,
+    "edges": 10,
+    "printed_parts": 2,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "9230badeec98f04efd5574580dddd84866ac2cf3bf8ee27f0b1021a962243199"
+  },
+  {
+    "diagram": "concept",
+    "cells": 130,
+    "vertices": 105,
+    "edges": 23,
+    "printed_parts": 3,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "63221e064fc3f2e07600896866f1bc57f6e5cb393a818027e6599de0f82ec398"
+  },
+  {
+    "diagram": "deployment",
+    "cells": 41,
+    "vertices": 28,
+    "edges": 11,
+    "printed_parts": 2,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "005bd3581586803a74432731a066eccb421a606e807e15bbfbafa55d8b3f0c42"
+  },
+  {
+    "diagram": "dfdcontext",
+    "cells": 41,
+    "vertices": 24,
+    "edges": 15,
+    "printed_parts": 2,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "81e63eb92becfbd4ed74ee270a55d4f43467409a3433104cb3c1b80216345e47"
+  },
+  {
+    "diagram": "logic",
+    "cells": 170,
+    "vertices": 143,
+    "edges": 25,
+    "printed_parts": 4,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "0705a710801ac0405626aec0fc5b538b66ce655cbccda4e020ae445ec4433e23"
+  },
+  {
+    "diagram": "nav",
+    "cells": 139,
+    "vertices": 110,
+    "edges": 27,
+    "printed_parts": 2,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "41c2f46d07db4665946dbcdf0514bb6c629f5bfdc451cf11ca969916d480ba5f"
+  },
+  {
+    "diagram": "physical",
+    "cells": 100,
+    "vertices": 89,
+    "edges": 9,
+    "printed_parts": 2,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "98f3a75e993445fa893b97060fda2cb73e65a9f26ead9b5c65ae3feb70a651fc"
+  },
+  {
+    "diagram": "physical_graph",
+    "cells": 82,
+    "vertices": 69,
+    "edges": 11,
+    "printed_parts": 2,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "0d5f4166253a1299ef82f6f5915ff66ff5d9224f2c4df57a94f456fc1e819a7a"
+  },
+  {
+    "diagram": "physical_ops",
+    "cells": 65,
+    "vertices": 63,
+    "edges": 0,
+    "printed_parts": 2,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "ebd9a54bfb70d9b8160fcfe71fea85ade5b161cadf5f17427e2de40f864480cf"
+  },
+  {
+    "diagram": "roles_context",
+    "cells": 35,
+    "vertices": 24,
+    "edges": 9,
+    "printed_parts": 2,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "5ce06dc6e46412f7e9c7f5cfb388a07481cd939ea87a646709f2ff6fcf987c92"
+  },
+  {
+    "diagram": "session_states",
+    "cells": 43,
+    "vertices": 26,
+    "edges": 15,
+    "printed_parts": 2,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "ffd4848f78b213c92751ea17668695917ce8e333253af43987f5c685c8f62814"
+  },
+  {
+    "diagram": "tobe_dfd",
+    "cells": 98,
+    "vertices": 67,
+    "edges": 29,
+    "printed_parts": 3,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "c9c77e232260947bc11c7269b1f837fb3cec80976761633c539bfb666c356198"
+  },
+  {
+    "diagram": "admin_process",
+    "cells": 43,
+    "vertices": 28,
+    "edges": 13,
+    "printed_parts": 2,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "7391f9e535fa63945038f5be7c39dab56ec2e84676ce87329dda0bd3b6b07c14"
+  },
+  {
+    "diagram": "generate_flow",
+    "cells": 57,
+    "vertices": 38,
+    "edges": 17,
+    "printed_parts": 3,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "04cc9975f8fc5a432e4ac39c29df8ad58069e010ea35a047989b1deea2e8b0e9"
+  },
+  {
+    "diagram": "review_flow",
+    "cells": 43,
+    "vertices": 26,
+    "edges": 15,
+    "printed_parts": 2,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "6023760c986d1a0fb535388dc3b0db825d142d17eb54e6ac3614ad8ba20e164f"
+  },
+  {
+    "diagram": "session_flow",
+    "cells": 57,
+    "vertices": 34,
+    "edges": 21,
+    "printed_parts": 2,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "94283a9d877c7f94aef822ea391aa8a88304e7aa1dd01644fa23091ab1118e88"
+  },
+  {
+    "diagram": "auth",
+    "cells": 56,
+    "vertices": 36,
+    "edges": 18,
+    "printed_parts": 2,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "7c677587c4026eb7e04fbbb90f433d561ff8f20cfc9055e756ab4674eefeb856"
+  },
+  {
+    "diagram": "review_sequence",
+    "cells": 71,
+    "vertices": 45,
+    "edges": 24,
+    "printed_parts": 3,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "f9136a7d20c842fe329e9f955f98e14d2d5bf12108cf8d69148e472d36fc0d20"
+  },
+  {
+    "diagram": "session_sequence",
+    "cells": 141,
+    "vertices": 90,
+    "edges": 49,
+    "printed_parts": 6,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "73a777a1f34fdadd323bf1b85fbe0496a8101805860216c8b2051e67df71be9b"
+  },
+  {
+    "diagram": "verification_sequence",
+    "cells": 122,
+    "vertices": 78,
+    "edges": 42,
+    "printed_parts": 7,
+    "min_print_font_pt": 10.5,
+    "cross_reference_updates": [],
+    "xml_sha256": "a84e31241fde750decad7f9e96a1bff84297dc601ffbfbc3f2bd0da887f10c64"
+  }
+]
