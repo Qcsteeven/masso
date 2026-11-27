@@ -136,6 +136,6 @@ https://qcsteeven.github.io/masso/demo/ — тот же интерфейс бе�
 
 - [Руководство пользователя](docs/manuals/user-guide.docx)
 - [Руководство администратора](docs/manuals/administrator-guide.docx)
-- [Курсовой проект в Word](docs/coursework/coursework.docx) и [PDF](docs/coursework/coursework.pdf)
+- [Курсовой проект в Word](docs/coursework/%D0%9A%D0%9F%20%D0%90%D0%A1%D0%9E%D0%98%D0%A3%20-%20%D0%94%D0%B5%D0%BC%D0%BE%D0%BD%D0%BE%D0%B2%20%D0%9B%D0%B5%D0%B2%20%D0%98%D0%A1%D0%98%D0%91-23-1.docx) и [PDF](docs/coursework/%D0%9A%D0%9F%20%D0%90%D0%A1%D0%9E%D0%98%D0%A3%20-%20%D0%94%D0%B5%D0%BC%D0%BE%D0%BD%D0%BE%D0%B2%20%D0%9B%D0%B5%D0%B2%20%D0%98%D0%A1%D0%98%D0%91-23-1.pdf)
 - [План курсового проекта](docs/coursework/plan.md)
 - [Макеты интерфейса в PowerPoint](docs/mockups/interface-design.pptx)
