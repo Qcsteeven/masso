@@ -1,0 +1,77 @@
+[
+  {
+    "key": "moodle",
+    "file": "moodle-course.png",
+    "source_page": "https://school.moodledemo.net/course/view.php?id=69",
+    "accessed": "2026-11-25",
+    "caption": "Страница курса в Moodle LMS",
+    "intro": "На рисунке 2 показана страница курса в демонстрационной среде Moodle LMS [6]. Слева доступно оглавление курса, в центральной области — учебные материалы и задания.",
+    "output_file": "moodle.png",
+    "sha256": "0475a16dda43fd24a3a60b9ca3e2adc7a870e666e808b3307b933d427d936ff4",
+    "pixels": [
+      2400,
+      1500
+    ]
+  },
+  {
+    "key": "aws",
+    "file": "aws-labmaker.png",
+    "source_page": "https://aws.amazon.com/training/digital/immersive-learning/",
+    "asset_url": "https://d1.awsstatic.com/onedam/marketing-channels/website/aws/en_US/events/approved/images/immersive-learning-lab-marker.a01985b5a312c7c82e43fcdc2d891b90299091cb.png",
+    "accessed": "2026-11-21",
+    "caption": "Подготовка лаборатории в AWS Skill Builder Lab Maker",
+    "intro": "На рисунке 3 представлен интерфейс Lab Maker в AWS Skill Builder [2]. Цель обучения задаётся в диалоге, а справа отображаются описание лаборатории и перечень задач.",
+    "output_file": "aws.png",
+    "sha256": "001e41afebdcb1bff328370f1e106805b0246e47aed302df36842995f8ce330e",
+    "pixels": [
+      1460,
+      958
+    ]
+  },
+  {
+    "key": "killercoda",
+    "file": "killercoda.png",
+    "source_page": "https://killercoda.com/creators",
+    "asset_url": "https://killercoda.com/assets/theia-Bhgly0Xn.png",
+    "accessed": "2026-11-21",
+    "caption": "Браузерная рабочая область Killercoda",
+    "intro": "На рисунке 4 приведён пример браузерного редактора Killercoda [3]. Слева показано дерево файлов, справа — редактор конфигурации.",
+    "output_file": "killercoda.png",
+    "sha256": "360546d0a60e62a55b853366289ae58621e41cd2428ad6d6f47b90597c7176b8",
+    "pixels": [
+      1972,
+      1058
+    ]
+  },
+  {
+    "key": "stepik",
+    "file": "stepik-frame-40.png",
+    "source_page": "https://teach.stepik.org/ru",
+    "asset_url": "https://thb.tildacdn.com/tild3939-3036-4533-b235-396334383737/checker.gif",
+    "accessed": "2026-11-21",
+    "caption": "Обратная связь при проверке ответа в Stepik",
+    "intro": "На рисунке 5 показана обратная связь при проверке численного ответа в Stepik [7]. Сообщение об ошибке выводится рядом с ответом и кнопкой повторной отправки.",
+    "frame": 40,
+    "output_file": "stepik.png",
+    "sha256": "11b6177341e45bd6f37bf0488c7f8fe2009544fce097a9dee67a9b5c60becf1d",
+    "pixels": [
+      640,
+      282
+    ]
+  },
+  {
+    "key": "ctfd",
+    "file": "ctfd-hints.png",
+    "source_page": "https://ctfd.io/",
+    "asset_url": "https://ctfd.io/static/images/section44.png",
+    "accessed": "2026-11-21",
+    "caption": "Пример карточки задания с подсказкой в CTFd",
+    "intro": "На рисунке 6 приведён пример карточки задания с подсказкой в CTFd [8]. В одной форме показаны условие, стоимость задания в баллах и элемент открытия подсказки.",
+    "output_file": "ctfd.png",
+    "sha256": "60a3127348fd94fbbdbae1a7aab3ee749720e06b647b4d6514b1accc609fdb8b",
+    "pixels": [
+      1264,
+      716
+    ]
+  }
+]

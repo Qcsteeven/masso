@@ -1,0 +1,29 @@
+{
+  "pages": 87,
+  "figures": 40,
+  "new_official_screenshots": 5,
+  "tables": 41,
+  "labelled_continuations": 7,
+  "external_sources": 14,
+  "contents_entries": 23,
+  "native_picture_borders": 40,
+  "table_font_pt": 14,
+  "margin_concerns": 0,
+  "engine": "ONLYOFFICE Desktop Editors native converter",
+  "preserved_original_image_bytes": 29,
+  "diagrams_with_only_reference_label_edits": 6,
+  "title_revision": {
+    "variant": 4,
+    "title_year": 2026,
+    "year_distance_from_page_bottom_mm": 22.28,
+    "pages": 87,
+    "unchanged_rendered_pages": 86,
+    "unchanged_tables": 41,
+    "unchanged_figures": 40,
+    "unchanged_labelled_table_continuations": 7,
+    "changed_pages": [
+      1
+    ],
+    "engine": "ONLYOFFICE Desktop Editors native converter"
+  }
+}
